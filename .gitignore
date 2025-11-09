@@ -1,0 +1,13 @@
+/vendor/
+/composer.lock
+/.idea/
+/.vscode/
+/.phpunit.result.cache
+/phpunit.xml
+.phpunit.cache
+*.log
+*.cache
+.DS_Store
+Thumbs.db
+update-namespace.php
+

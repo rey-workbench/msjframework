@@ -1,0 +1,78 @@
+{
+    "name": "reysilvaa12/msjframework",
+    "description": "MSJ Framework - MSJ Framework Generator",
+    "keywords": [
+        "laravel",
+        "crud",
+        "generator",
+        "scaffolding",
+        "msj",
+        "framework",
+        "laravel-prompts",
+        "artisan",
+        "code-generator",
+        "blade",
+        "model-generator",
+        "controller-generator"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Reynald Silva",
+            "email": "reynaldsilva123@gmail.com",
+            "homepage": "https://github.com/reysilvaa/msjframework",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/reysilvaa/msjframework",
+    "support": {
+        "issues": "https://github.com/reysilvaa/msjframework/issues",
+        "source": "https://github.com/reysilvaa/msjframework",
+        "docs": "https://github.com/reysilvaa/msjframework#readme"
+    },
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^12.0",
+        "laravel/prompts": "^0.1.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.24",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "MSJFramework\\LaravelGenerator\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MSJFramework\\LaravelGenerator\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "MSJFramework\\LaravelGenerator\\MSJServiceProvider"
+            ],
+            "aliases": {}
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "pint": "pint",
+        "pint:test": "pint --test"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "preferred-install": "dist",
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    }
+}
+
