@@ -2,6 +2,11 @@
 
 namespace MSJFramework\LaravelGenerator\Services\Templates;
 
+use MSJFramework\LaravelGenerator\Services\Templates\Helpers\ErrorHelperTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Helpers\FormatHelperTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Helpers\FunctionHelperTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Helpers\TableExporterTemplate;
+
 class MSJBaseControllerTemplate
 {
     public static function getTemplate(): string
@@ -415,10 +420,10 @@ PHP;
     public static function createIfNotExists(): void
     {
         // Create required helpers first
-        \App\Services\Templates\Helpers\FormatHelperTemplate::createIfNotExists();
-        \App\Services\Templates\Helpers\FunctionHelperTemplate::createIfNotExists();
-        \App\Services\Templates\Helpers\ErrorHelperTemplate::createIfNotExists();
-        \App\Services\Templates\Helpers\TableExporterTemplate::createIfNotExists();
+        FormatHelperTemplate::createIfNotExists();
+        FunctionHelperTemplate::createIfNotExists();
+        ErrorHelperTemplate::createIfNotExists();
+        TableExporterTemplate::createIfNotExists();
 
         $controllerPath = app_path('Http/Controllers/MSJBaseController.php');
 

@@ -11,6 +11,7 @@ use MSJFramework\LaravelGenerator\Services\Templates\ListView;
 use MSJFramework\LaravelGenerator\Services\Templates\ModelTemplate;
 use MSJFramework\LaravelGenerator\Services\Templates\MSJBaseControllerTemplate;
 use MSJFramework\LaravelGenerator\Services\Templates\ShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Helpers\ValidationHelperTemplate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -167,7 +168,7 @@ class MSJModuleGenerator
     {
         // Ensure MSJBaseController and ValidationHelper exist first
         MSJBaseControllerTemplate::createIfNotExists();
-        \App\Services\Templates\Helpers\ValidationHelperTemplate::createIfNotExists();
+        ValidationHelperTemplate::createIfNotExists();
 
         // Generate controller name compatible with PageController
         // PageController uses ucfirst() so we need to match that behavior
