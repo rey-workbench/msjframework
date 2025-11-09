@@ -20,8 +20,8 @@ MSJ Framework Laravel Generator adalah package Laravel yang memudahkan pembuatan
 ## 📋 Requirements
 
 - PHP >= 8.2
-- Laravel >= 12.0
-- Laravel Prompts >= 0.1.0
+- Laravel ^11.0|^12.0
+- Laravel Prompts ^0.1.0|^0.3.0
 
 ## 🚀 Installation
 
