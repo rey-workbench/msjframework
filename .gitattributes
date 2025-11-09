@@ -1,0 +1,50 @@
+# Exclude development files from package distribution
+# Files listed here will not be included when package is installed via composer
+
+# Scripts (development only)
+*.sh export-ignore
+setup-git.sh export-ignore
+reset-tags.sh export-ignore
+update-packagist.sh export-ignore
+
+# GitHub workflows (CI/CD)
+.github/ export-ignore
+
+# Documentation (development)
+# Keep README.md for package documentation
+PACKAGIST_UPDATE.md export-ignore
+MANUAL_RESET_TAGS.md export-ignore
+GIT_TAG_GUIDE.md export-ignore
+TROUBLESHOOTING.md export-ignore
+DEPENDENCY_FIX.md export-ignore
+QUICK_START_PACKAGIST.md export-ignore
+PUSH_TO_PACKAGIST.md export-ignore
+EXCLUDE_FILES.md export-ignore
+
+# Development tools
+update-namespace.php export-ignore
+.phpunit.result.cache export-ignore
+phpunit.xml export-ignore
+
+# IDE files
+.idea/ export-ignore
+.vscode/ export-ignore
+*.swp export-ignore
+*.swo export-ignore
+*~ export-ignore
+
+# OS files
+.DS_Store export-ignore
+Thumbs.db export-ignore
+
+# Git files
+.gitignore export-ignore
+.gitattributes export-ignore
+
+# Keep these files in distribution
+# composer.json (always included)
+# src/ (source code)
+# config/ (configuration)
+# README.md (package documentation)
+# LICENSE (license file)
+
