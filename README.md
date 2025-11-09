@@ -1,8 +1,8 @@
 # MSJ Framework Laravel Generator
 
-[![Latest Version](https://img.shields.io/packagist/v/msj-framework/laravel-generator.svg?style=flat-square)](https://packagist.org/packages/msj-framework/laravel-generator)
-[![Total Downloads](https://img.shields.io/packagist/dt/msj-framework/laravel-generator.svg?style=flat-square)](https://packagist.org/packages/msj-framework/laravel-generator)
-[![License](https://img.shields.io/packagist/l/msj-framework/laravel-generator.svg?style=flat-square)](https://packagist.org/packages/msj-framework/laravel-generator)
+[![Latest Version](https://img.shields.io/packagist/v/reysilvaa12/msjframework.svg?style=flat-square)](https://packagist.org/packages/reysilvaa12/msjframework)
+[![Total Downloads](https://img.shields.io/packagist/dt/reysilvaa12/msjframework.svg?style=flat-square)](https://packagist.org/packages/reysilvaa12/msjframework)
+[![License](https://img.shields.io/packagist/l/reysilvaa12/msjframework.svg?style=flat-square)](https://packagist.org/packages/reysilvaa12/msjframework)
 
 MSJ Framework Laravel Generator adalah package Laravel yang memudahkan pembuatan CRUD (Create, Read, Update, Delete) dengan wizard interaktif menggunakan Laravel Prompts. Package ini secara otomatis menghasilkan Model, Controller, Views (Blade), JavaScript, dan konfigurasi database untuk modul MSJ Framework.
 
@@ -28,7 +28,7 @@ MSJ Framework Laravel Generator adalah package Laravel yang memudahkan pembuatan
 Install package via Composer:
 
 ```bash
-composer require msj-framework/laravel-generator
+composer require reysilvaa12/msjframework
 ```
 
 Publish configuration (optional):
@@ -92,41 +92,52 @@ php artisan msj:make views
 ## 📚 Commands
 
 ### `msj:make`
+
 Hub command untuk semua generator. Menampilkan menu interaktif jika dijalankan tanpa argument.
 
 ### `msj:make:menu`
+
 Wizard interaktif untuk generate module lengkap dengan 4 langkah:
+
 1. Pilih Layout Type
 2. Informasi Dasar (gmenu, dmenu, menu name, URL, table)
 3. Pengaturan Field
 4. Ringkasan
 
 ### `msj:make:crud {table}`
+
 Generate CRUD secara cepat dari tabel database.
 
 **Options:**
+
 - `--gmenu=` - Kode group menu (default: KOP001)
 - `--dmenu=` - Kode detail menu (default: KOP999)
 - `--layout=` - Tipe layout: manual|standr|transc|system|report (default: manual)
 
 ### `msj:make:controller {name}`
+
 Generate controller MSJ dengan method CRUD.
 
 **Options:**
+
 - `--table=` - Nama tabel database
 - `--gmenu=` - Kode group menu
 - `--url=` - URL slug
 
 ### `msj:make:model {table}`
+
 Generate model dari struktur tabel database.
 
 **Options:**
+
 - `--force` - Menimpa model yang sudah ada
 
 ### `msj:make:views`
+
 Generate blade views (list, add, edit, show) dan JavaScript.
 
 **Options:**
+
 - `--gmenu=` - Kode group menu
 - `--url=` - URL slug
 - `--table=` - Nama tabel database
@@ -143,12 +154,14 @@ Generate blade views (list, add, edit, show) dan JavaScript.
 ## 📁 Generated Files
 
 ### Model
+
 - `app/Models/{ModelName}.php`
 - Auto-detected primary key
 - Auto-generated fillable properties
 - Timestamps configuration
 
 ### Controller
+
 - `app/Http/Controllers/{ControllerName}.php`
 - CRUD methods: index, add, store, edit, update, destroy, show
 - Authorization checks
@@ -156,15 +169,18 @@ Generate blade views (list, add, edit, show) dan JavaScript.
 - Transaction support
 
 ### Views
+
 - `resources/views/{gmenu}/{url}/list.blade.php`
 - `resources/views/{gmenu}/{url}/add.blade.php`
 - `resources/views/{gmenu}/{url}/edit.blade.php`
 - `resources/views/{gmenu}/{url}/show.blade.php`
 
 ### JavaScript
+
 - `resources/views/js/{dmenu}.blade.php`
 
 ### Database Configuration
+
 - Menu registration in `sys_dmenu`
 - Table configuration in `sys_table`
 - Authorization in `sys_auth`
@@ -208,6 +224,7 @@ php artisan msj:make menu
 ```
 
 Kemudian ikuti wizard:
+
 1. Pilih layout: `manual`
 2. Pilih gmenu: `KOP001`
 3. Masukkan dmenu: `KOP001`
@@ -247,4 +264,3 @@ For support, email support@msjframework.com or open an issue on GitHub.
 - Laravel Framework
 - Laravel Prompts
 - MSJ Framework Team
-

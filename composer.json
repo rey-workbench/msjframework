@@ -1,6 +1,6 @@
 {
     "name": "reysilvaa12/msjframework",
-    "description": "MSJ Framework - MSJ Framework Generator",
+    "description": "MSJ Framework - Laravel CRUD Generator with Interactive Wizard",
     "keywords": [
         "laravel",
         "crud",
@@ -21,16 +21,22 @@
         {
             "name": "Reynald Silva",
             "email": "reynaldsilva123@gmail.com",
-            "homepage": "https://github.com/reysilvaa/msjframework",
+            "homepage": "https://github.com/rey-workbench/msjframework",
             "role": "Developer"
         }
     ],
-    "homepage": "https://github.com/reysilvaa/msjframework",
+    "homepage": "https://github.com/rey-workbench/msjframework",
     "support": {
-        "issues": "https://github.com/reysilvaa/msjframework/issues",
-        "source": "https://github.com/reysilvaa/msjframework",
-        "docs": "https://github.com/reysilvaa/msjframework#readme"
+        "issues": "https://github.com/rey-workbench/msjframework/issues",
+        "source": "https://github.com/rey-workbench/msjframework",
+        "docs": "https://github.com/rey-workbench/msjframework#readme"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/rey-workbench/msjframework.git"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
