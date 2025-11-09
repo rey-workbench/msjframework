@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Templates\Components;
+namespace MSJFramework\LaravelGenerator\Services\Templates\Components;
 
 class FormComponent
 {
