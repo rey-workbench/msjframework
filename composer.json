@@ -1,6 +1,6 @@
 {
-    "name": "reysilvaa12/msjframework",
-    "description": "MSJ Framework - Laravel CRUD Generator with Interactive Wizard",
+    "name": "reyworkbench/msjframework",
+    "description": "MSJ Framework - Base Framework for Laravel MSJ Framework",
     "keywords": [
         "laravel",
         "crud",
