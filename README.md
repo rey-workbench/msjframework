@@ -6,24 +6,24 @@
 
 MSJ Framework Laravel Generator adalah package Laravel yang memudahkan pembuatan CRUD (Create, Read, Update, Delete) dengan wizard interaktif menggunakan Laravel Prompts. Package ini secara otomatis menghasilkan Model, Controller, Views (Blade), JavaScript, dan konfigurasi database untuk modul MSJ Framework.
 
-## ✨ Fitur
+## Fitur
 
-- 🎯 **Wizard Interaktif** - Menggunakan Laravel Prompts untuk pengalaman yang lebih baik
-- 🚀 **CRUD Generator** - Generate lengkap Model, Controller, Views, dan JavaScript
-- 📋 **Multi Layout Support** - Mendukung layout manual, standard, transaksi, system, dan report
-- 🎨 **Auto Detection** - Deteksi otomatis struktur tabel database
-- 🔒 **Authorization** - Generate konfigurasi authorization otomatis
-- 📝 **Fillable Auto** - Generate fillable property secara otomatis dari struktur tabel
-- 🎨 **Beautiful Console** - Console output yang menarik dengan ASCII art dan badges
-- 🔍 **Search & Select** - Pencarian tabel dan field dengan autocomplete
+- **Wizard Interaktif** - Menggunakan Laravel Prompts untuk pengalaman yang lebih baik
+- **CRUD Generator** - Generate lengkap Model, Controller, Views, dan JavaScript
+- **Multi Layout Support** - Mendukung layout manual, standard, transaksi, system, dan report
+- **Auto Detection** - Deteksi otomatis struktur tabel database
+- **Authorization** - Generate konfigurasi authorization otomatis
+- **Fillable Auto** - Generate fillable property secara otomatis dari struktur tabel
+- **Beautiful Console** - Console output yang menarik dengan ASCII art dan badges
+- **Search & Select** - Pencarian tabel dan field dengan autocomplete
 
-## 📋 Requirements
+## Requirements
 
 - PHP >= 8.2
 - Laravel ^11.0|^12.0
 - Laravel Prompts ^0.1.0|^0.3.0
 
-## 🚀 Installation
+## Installation
 
 Install package via Composer:
 
@@ -37,7 +37,7 @@ Publish configuration (optional):
 php artisan vendor:publish --tag=msj-generator-config
 ```
 
-## 📖 Usage
+## Usage
 
 ### Interactive Menu
 
@@ -89,7 +89,7 @@ php artisan msj:make model mst_example
 php artisan msj:make views
 ```
 
-## 📚 Commands
+## Commands
 
 ### `msj:make`
 
@@ -143,7 +143,7 @@ Generate blade views (list, add, edit, show) dan JavaScript.
 - `--table=` - Nama tabel database
 - `--dmenu=` - Kode detail menu
 
-## 🎨 Layout Types
+## Layout Types
 
 - **manual** - Controller & views custom (kontrol penuh)
 - **standr** - CRUD standard (form sederhana, 1 primary key)
@@ -151,7 +151,7 @@ Generate blade views (list, add, edit, show) dan JavaScript.
 - **system** - Konfigurasi sistem (master-detail)
 - **report** - Menu laporan (halaman filter & hasil)
 
-## 📁 Generated Files
+## Generated Files
 
 ### Model
 
@@ -185,7 +185,7 @@ Generate blade views (list, add, edit, show) dan JavaScript.
 - Table configuration in `sys_table`
 - Authorization in `sys_auth`
 
-## ⚙️ Configuration
+## Configuration
 
 File konfigurasi: `config/msj-generator.php`
 
@@ -198,7 +198,7 @@ return [
 ];
 ```
 
-## 🔧 Database Requirements
+## Database Requirements
 
 Package ini memerlukan tabel berikut di database:
 
@@ -209,7 +209,7 @@ Package ini memerlukan tabel berikut di database:
 - `sys_roles` - Roles
 - `sys_log` - System logs (optional)
 
-## 📝 Examples
+## Examples
 
 ### Example 1: Generate CRUD untuk tabel `mst_anggota`
 
@@ -233,7 +233,7 @@ Kemudian ikuti wizard:
 6. Pilih tabel: `mst_anggota`
 7. Konfirmasi generate
 
-## 🛠️ Development
+## Development
 
 ### Run Tests
 
@@ -247,20 +247,22 @@ composer test
 composer pint
 ```
 
-## 📄 License
+## License
 
-The MIT License (MIT). Please see [License File](LICENSE) for more information.
+Proprietary License. Copyright (c) 2024 PT Multi Spunindo Jaya Tbk. All Rights Reserved.
 
-## 🤝 Contributing
+This software is the exclusive property of PT Multi Spunindo Jaya Tbk. Unauthorized use, copying, modification, distribution, or reproduction is strictly prohibited. Please see [License File](LICENSE) for more information.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Contributing
 
-## 📞 Support
+Contributions are closed! Please feel free to email me to contribute the project.
 
-For support, email support@msjframework.com or open an issue on GitHub.
+## Support
 
-## 🙏 Credits
+For support, email reynaldsilva123@gmail.com or open an issue on GitHub.
 
-- Laravel Framework
-- Laravel Prompts
-- MSJ Framework Team
+## Credits
+
+- PT Multi Spunindo Jaya Tbk
+- MSJKoperasi Team
+- MSJ Framework Team (MSJ IT)

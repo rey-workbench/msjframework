@@ -16,7 +16,7 @@
         "controller-generator"
     ],
     "type": "library",
-    "license": "MIT",
+    "license": "proprietary",
     "authors": [
         {
             "name": "Reynald Silva",
