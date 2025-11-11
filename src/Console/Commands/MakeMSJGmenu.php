@@ -22,7 +22,7 @@ class MakeMSJGmenu extends Command
 
         $gmenuCode = $this->argument('code') ?: text(
             label: 'Kode Group Menu (gmenu)',
-            placeholder: 'KOP001',
+            placeholder: 'KOP001 (case insensitive)',
             required: true,
             validate: fn($value) => $this->validateGmenuCode($value, 6) // Max 6 chars
         );

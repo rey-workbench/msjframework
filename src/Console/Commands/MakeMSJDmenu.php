@@ -24,7 +24,7 @@ class MakeMSJDmenu extends Command
 
         $dmenuCode = $this->argument('code') ?: text(
             label: 'Kode Detail Menu (dmenu)',
-            placeholder: 'KOP999',
+            placeholder: 'mygmenu',
             required: true,
             validate: fn($value) => $this->validateDmenuCode($value, 6) // Max 6 chars
         );

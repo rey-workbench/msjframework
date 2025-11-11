@@ -18,10 +18,16 @@ trait HasValidation
         }
 
         if (strlen($value) > $maxLength) {
-            return "Kode gmenu maksimal {$maxLength} karakter";
+            return "Kode gmenu maksimal {$maxLength} karakter (input: " . strlen($value) . " karakter)";
         }
 
-        if ($this->gmenuExists($value)) {
+        // Allow letters and numbers, case insensitive
+        if (!preg_match('/^[A-Za-z0-9]+$/', $value)) {
+            return 'Kode gmenu hanya boleh huruf dan angka';
+        }
+
+        // Check existence case insensitive (check both original and uppercase)
+        if ($this->gmenuExists($value) || $this->gmenuExists(strtoupper($value)) || $this->gmenuExists(strtolower($value))) {
             return "Kode gmenu '{$value}' sudah ada";
         }
 
@@ -38,10 +44,16 @@ trait HasValidation
         }
 
         if (strlen($value) > $maxLength) {
-            return "Kode dmenu maksimal {$maxLength} karakter";
+            return "Kode dmenu maksimal {$maxLength} karakter (input: " . strlen($value) . " karakter)";
         }
 
-        if ($this->dmenuExists($value)) {
+        // Allow letters and numbers, case insensitive
+        if (!preg_match('/^[A-Za-z0-9]+$/', $value)) {
+            return 'Kode dmenu hanya boleh huruf dan angka';
+        }
+
+        // Check existence case insensitive (check both original and uppercase)
+        if ($this->dmenuExists($value) || $this->dmenuExists(strtoupper($value)) || $this->dmenuExists(strtolower($value))) {
             return "Kode dmenu '{$value}' sudah ada";
         }
 
