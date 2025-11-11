@@ -14,3 +14,4 @@ update-namespace.php
 reset-tags.sh
 PACKAGIST_UPDATE.md
 update-packagist.sh
+setup-packagist.sh
