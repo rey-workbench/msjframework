@@ -26,7 +26,17 @@ class MakeMSJDmenu extends Command
             label: 'Kode Detail Menu (dmenu)',
             placeholder: 'mygmenu',
             required: true,
-            validate: fn($value) => $this->validateDmenuCode($value, 6) // Max 6 chars
+            validate: function($value) {
+                $validation = $this->validateDmenuCode($value, 6);
+                if ($validation) return $validation;
+                
+                // Check duplicate
+                if ($this->dmenuExists($value) || $this->dmenuExists(strtoupper($value)) || $this->dmenuExists(strtolower($value))) {
+                    return "Kode dmenu '{$value}' sudah ada";
+                }
+                
+                return null;
+            }
         );
 
         $dmenuName = $this->argument('name') ?: text(

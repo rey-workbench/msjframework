@@ -24,7 +24,17 @@ class MakeMSJGmenu extends Command
             label: 'Kode Group Menu (gmenu)',
             placeholder: 'KOP001 (case insensitive)',
             required: true,
-            validate: fn($value) => $this->validateGmenuCode($value, 6) // Max 6 chars
+            validate: function($value) {
+                $validation = $this->validateGmenuCode($value, 6);
+                if ($validation) return $validation;
+                
+                // Check duplicate
+                if ($this->gmenuExists($value) || $this->gmenuExists(strtoupper($value)) || $this->gmenuExists(strtolower($value))) {
+                    return "Kode gmenu '{$value}' sudah ada";
+                }
+                
+                return null;
+            }
         );
 
         $gmenuName = $this->argument('name') ?: text(

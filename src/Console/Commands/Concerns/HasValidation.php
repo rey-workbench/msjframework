@@ -26,10 +26,6 @@ trait HasValidation
             return 'Kode gmenu hanya boleh huruf dan angka';
         }
 
-        // Check existence case insensitive (check both original and uppercase)
-        if ($this->gmenuExists($value) || $this->gmenuExists(strtoupper($value)) || $this->gmenuExists(strtolower($value))) {
-            return "Kode gmenu '{$value}' sudah ada";
-        }
 
         return null;
     }
@@ -52,10 +48,6 @@ trait HasValidation
             return 'Kode dmenu hanya boleh huruf dan angka';
         }
 
-        // Check existence case insensitive (check both original and uppercase)
-        if ($this->dmenuExists($value) || $this->dmenuExists(strtoupper($value)) || $this->dmenuExists(strtolower($value))) {
-            return "Kode dmenu '{$value}' sudah ada";
-        }
 
         return null;
     }
