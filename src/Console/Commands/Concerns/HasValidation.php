@@ -205,22 +205,6 @@ trait HasValidation
     }
 
     /**
-     * Check if gmenu exists
-     */
-    protected function gmenuExists(string $gmenu): bool
-    {
-        return DB::table('sys_gmenu')->where('gmenu', $gmenu)->exists();
-    }
-
-    /**
-     * Check if dmenu exists
-     */
-    protected function dmenuExists(string $dmenu): bool
-    {
-        return DB::table('sys_dmenu')->where('dmenu', $dmenu)->exists();
-    }
-
-    /**
      * Check if role exists
      */
     protected function roleExists(string $roleId): bool
