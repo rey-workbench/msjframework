@@ -65,21 +65,21 @@ class MakeMSJAuth extends Command
         $this->info('=== Membuat Role Baru ===');
 
         $idroles = text(
-            label: 'ID Role (6 karakter):',
+            label: 'ID Role (max 6 karakter):',
             placeholder: 'admin1',
-            validate: fn(string $value) => $this->validateRoleId($value)
+            validate: fn(string $value) => $this->validateRoleId($value, 6)
         );
 
         $name = text(
-            label: 'Nama Role:',
+            label: 'Nama Role (max 20 karakter):',
             placeholder: 'Administrator',
-            validate: fn(string $value) => $this->validateName($value, 2, 20)
+            validate: fn(string $value) => $this->validateRoleName($value, 20)
         );
 
         $description = text(
-            label: 'Deskripsi:',
+            label: 'Deskripsi (max 100 karakter):',
             placeholder: 'Role untuk administrator sistem',
-            validate: fn(string $value) => $this->validateName($value, 2, 100)
+            validate: fn(string $value) => $this->validateRoleDescription($value, 100)
         );
 
         try {

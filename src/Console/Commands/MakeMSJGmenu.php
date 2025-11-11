@@ -24,14 +24,14 @@ class MakeMSJGmenu extends Command
             label: 'Kode Group Menu (gmenu)',
             placeholder: 'KOP001',
             required: true,
-            validate: fn($value) => $this->validateGmenuCode($value)
+            validate: fn($value) => $this->validateGmenuCode($value, 6) // Max 6 chars
         );
 
         $gmenuName = $this->argument('name') ?: text(
             label: 'Nama Group Menu',
             placeholder: 'Master Data',
             required: true,
-            validate: fn($value) => $this->validateName($value)
+            validate: fn($value) => $this->validateName($value, 2, 25) // Max 25 chars
         );
 
         $gmenuUrut = (int) ($this->option('urut') ?: text(

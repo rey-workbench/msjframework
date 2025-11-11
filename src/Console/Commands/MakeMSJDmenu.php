@@ -26,14 +26,14 @@ class MakeMSJDmenu extends Command
             label: 'Kode Detail Menu (dmenu)',
             placeholder: 'KOP999',
             required: true,
-            validate: fn($value) => $this->validateDmenuCode($value)
+            validate: fn($value) => $this->validateDmenuCode($value, 6) // Max 6 chars
         );
 
         $dmenuName = $this->argument('name') ?: text(
             label: 'Nama Detail Menu',
             placeholder: 'Data Example',
             required: true,
-            validate: fn($value) => $this->validateName($value)
+            validate: fn($value) => $this->validateName($value, 2, 25) // Max 25 chars
         );
 
         // Pilih gmenu

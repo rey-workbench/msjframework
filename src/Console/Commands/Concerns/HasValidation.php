@@ -11,14 +11,14 @@ trait HasValidation
     /**
      * Validate gmenu code
      */
-    protected function validateGmenuCode(string $value): ?string
+    protected function validateGmenuCode(string $value, int $maxLength = 6): ?string
     {
         if (empty($value)) {
             return 'Kode gmenu harus diisi';
         }
 
-        if (strlen($value) > 10) {
-            return 'Kode gmenu maksimal 10 karakter';
+        if (strlen($value) > $maxLength) {
+            return "Kode gmenu maksimal {$maxLength} karakter";
         }
 
         if ($this->gmenuExists($value)) {
@@ -31,14 +31,14 @@ trait HasValidation
     /**
      * Validate dmenu code
      */
-    protected function validateDmenuCode(string $value): ?string
+    protected function validateDmenuCode(string $value, int $maxLength = 6): ?string
     {
         if (empty($value)) {
             return 'Kode dmenu harus diisi';
         }
 
-        if (strlen($value) > 10) {
-            return 'Kode dmenu maksimal 10 karakter';
+        if (strlen($value) > $maxLength) {
+            return "Kode dmenu maksimal {$maxLength} karakter";
         }
 
         if ($this->dmenuExists($value)) {
@@ -51,22 +51,46 @@ trait HasValidation
     /**
      * Validate role ID
      */
-    protected function validateRoleId(string $value): ?string
+    protected function validateRoleId(string $value, int $maxLength = 6): ?string
     {
         if (empty($value)) {
             return 'ID Role harus diisi';
         }
 
-        if (strlen($value) !== 6) {
-            return 'ID Role harus 6 karakter';
-        }
-
-        if (!preg_match('/^[a-z0-9]+$/', $value)) {
-            return 'ID Role hanya boleh huruf kecil dan angka';
+        if (strlen($value) > $maxLength) {
+            return "ID Role maksimal {$maxLength} karakter";
         }
 
         if ($this->roleExists($value)) {
             return "ID Role '{$value}' sudah ada";
+        }
+
+        return null;
+    }
+
+    /**
+     * Validate role name
+     */
+    protected function validateRoleName(string $value, int $maxLength = 20): ?string
+    {
+        if (empty($value)) {
+            return 'Nama role harus diisi';
+        }
+
+        if (strlen($value) > $maxLength) {
+            return "Nama role maksimal {$maxLength} karakter";
+        }
+
+        return null;
+    }
+
+    /**
+     * Validate role description
+     */
+    protected function validateRoleDescription(string $value, int $maxLength = 100): ?string
+    {
+        if (strlen($value) > $maxLength) {
+            return "Deskripsi role maksimal {$maxLength} karakter";
         }
 
         return null;
@@ -166,5 +190,29 @@ trait HasValidation
     protected function emailExists(string $email): bool
     {
         return DB::table('users')->where('email', $email)->exists();
+    }
+
+    /**
+     * Check if gmenu exists
+     */
+    protected function gmenuExists(string $gmenu): bool
+    {
+        return DB::table('sys_gmenu')->where('gmenu', $gmenu)->exists();
+    }
+
+    /**
+     * Check if dmenu exists
+     */
+    protected function dmenuExists(string $dmenu): bool
+    {
+        return DB::table('sys_dmenu')->where('dmenu', $dmenu)->exists();
+    }
+
+    /**
+     * Check if role exists
+     */
+    protected function roleExists(string $roleId): bool
+    {
+        return DB::table('sys_roles')->where('idroles', $roleId)->exists();
     }
 }
