@@ -54,6 +54,13 @@ class MakeMSJDmenu extends Command
             }
         }
 
+        $dmenuUrl = text(
+            label: 'URL Detail Menu (max 50 karakter)',
+            placeholder: '/data-example',
+            required: true,
+            validate: fn($value) => $this->validateName($value, 1, 50) // Max 50 chars
+        );
+
         $dmenuUrut = (int) ($this->option('urut') ?: text(
             label: 'Urutan',
             default: '999',
@@ -67,7 +74,7 @@ class MakeMSJDmenu extends Command
             'urut' => $dmenuUrut,
             'name' => $dmenuName,
             'icon' => null,
-            'url' => '', // Empty string untuk field yang required tapi bisa kosong
+            'url' => $dmenuUrl, // URL yang diinput user
             'tabel' => null,
             'layout' => 'master',
             'sub' => null,
