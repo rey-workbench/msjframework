@@ -28,7 +28,7 @@ MSJ Framework Laravel Generator adalah package Laravel yang memudahkan pembuatan
 Install package via Composer:
 
 ```bash
-composer require reysilvaa12/msjframework
+composer require reyworkbench/msjframework
 ```
 
 Publish configuration (optional):
