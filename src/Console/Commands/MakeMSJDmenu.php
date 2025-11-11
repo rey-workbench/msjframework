@@ -54,12 +54,8 @@ class MakeMSJDmenu extends Command
             }
         }
 
-        $dmenuUrl = text(
-            label: 'URL Detail Menu (max 50 karakter)',
-            placeholder: '/data-example',
-            required: true,
-            validate: fn($value) => $this->validateName($value, 1, 50) // Max 50 chars
-        );
+        // Auto-generate URL berdasarkan dmenu code
+        $dmenuUrl = strtolower($dmenuCode);
 
         $dmenuUrut = (int) ($this->option('urut') ?: text(
             label: 'Urutan',
