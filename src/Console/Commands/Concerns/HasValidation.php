@@ -65,9 +65,6 @@ trait HasValidation
             return "ID Role maksimal {$maxLength} karakter";
         }
 
-        if ($this->roleExists($value)) {
-            return "ID Role '{$value}' sudah ada";
-        }
 
         return null;
     }
@@ -196,11 +193,4 @@ trait HasValidation
         return DB::table('users')->where('email', $email)->exists();
     }
 
-    /**
-     * Check if role exists
-     */
-    protected function roleExists(string $roleId): bool
-    {
-        return DB::table('sys_roles')->where('idroles', $roleId)->exists();
-    }
 }

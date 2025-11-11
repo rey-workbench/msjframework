@@ -67,7 +67,17 @@ class MakeMSJAuth extends Command
         $idroles = text(
             label: 'ID Role (max 6 karakter):',
             placeholder: 'admin1',
-            validate: fn(string $value) => $this->validateRoleId($value, 6)
+            validate: function(string $value) {
+                $validation = $this->validateRoleId($value, 6);
+                if ($validation) return $validation;
+                
+                // Check duplicate
+                if ($this->roleExists($value)) {
+                    return "ID Role '{$value}' sudah ada";
+                }
+                
+                return null;
+            }
         );
 
         $name = text(
