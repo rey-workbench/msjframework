@@ -166,19 +166,43 @@ class MakeMSJAuth extends Command
             return;
         }
 
-        $this->info('Pilih permissions (1 = Ya, 0 = Tidak):');
+        // Pilih template permission atau custom
+        $template = select(
+            'Pilih template permission:',
+            [
+                'full' => 'Full Access (semua permission)',
+                'readonly' => 'Read Only (hanya view, print, excel, pdf)',
+                'editor' => 'Editor (add, edit, view, print, excel, pdf)',
+                'custom' => 'Custom (pilih manual)'
+            ],
+            default: 'full'
+        );
 
-        $permissions = [
-            'add' => select('Add/Create:', ['0' => 'Tidak', '1' => 'Ya']),
-            'edit' => select('Edit/Update:', ['0' => 'Tidak', '1' => 'Ya']),
-            'delete' => select('Delete:', ['0' => 'Tidak', '1' => 'Ya']),
-            'approval' => select('Approval:', ['0' => 'Tidak', '1' => 'Ya']),
-            'value' => select('View/Value:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
-            'print' => select('Print:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
-            'excel' => select('Excel:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
-            'pdf' => select('PDF:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
-            'rules' => select('Rules:', ['0' => 'Tidak', '1' => 'Ya']),
-        ];
+        $permissions = match($template) {
+            'full' => [
+                'add' => 1, 'edit' => 1, 'delete' => 1, 'approval' => 1,
+                'value' => 1, 'print' => 1, 'excel' => 1, 'pdf' => 1, 'rules' => 1
+            ],
+            'readonly' => [
+                'add' => 0, 'edit' => 0, 'delete' => 0, 'approval' => 0,
+                'value' => 1, 'print' => 1, 'excel' => 1, 'pdf' => 1, 'rules' => 0
+            ],
+            'editor' => [
+                'add' => 1, 'edit' => 1, 'delete' => 0, 'approval' => 0,
+                'value' => 1, 'print' => 1, 'excel' => 1, 'pdf' => 1, 'rules' => 0
+            ],
+            'custom' => [
+                'add' => (int) select('Add/Create:', ['0' => 'Tidak', '1' => 'Ya']),
+                'edit' => (int) select('Edit/Update:', ['0' => 'Tidak', '1' => 'Ya']),
+                'delete' => (int) select('Delete:', ['0' => 'Tidak', '1' => 'Ya']),
+                'approval' => (int) select('Approval:', ['0' => 'Tidak', '1' => 'Ya']),
+                'value' => (int) select('View/Value:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
+                'print' => (int) select('Print:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
+                'excel' => (int) select('Excel:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
+                'pdf' => (int) select('PDF:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
+                'rules' => (int) select('Rules:', ['0' => 'Tidak', '1' => 'Ya']),
+            ]
+        };
 
         try {
             DB::table('sys_auth')->insert([
