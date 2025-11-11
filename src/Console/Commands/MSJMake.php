@@ -3,8 +3,9 @@
 namespace MSJFramework\LaravelGenerator\Console\Commands;
 
 use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasConsoleStyling;
+use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasDatabaseOperations;
+use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasMenuOperations;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
@@ -12,7 +13,7 @@ use function Laravel\Prompts\text;
 
 class MSJMake extends Command
 {
-    use HasConsoleStyling;
+    use HasConsoleStyling, HasDatabaseOperations, HasMenuOperations;
 
     protected $signature = 'msj:make {type?} {name?}';
 
@@ -32,6 +33,8 @@ class MSJMake extends Command
                 'controller' => $this->makeController($name),
                 'model' => $this->makeModel($name),
                 'views' => $this->call('msj:make:views'),
+                'auth' => $this->call('msj:make:auth'),
+                'save' => $this->call('msj:make:save'),
                 default => $this->handleUnknownType($type),
             };
         }
@@ -47,6 +50,8 @@ class MSJMake extends Command
                 'controller' => 'Generate Controller',
                 'model' => 'Generate Model',
                 'views' => 'Generate Views',
+                'auth' => 'Generate Auth Data (Role/User/Permission)',
+                'save' => 'Save Data to Seeders (Export Current Data)',
                 'help' => 'Lihat Bantuan Detail',
                 'exit' => 'Keluar',
             ],
@@ -69,6 +74,8 @@ class MSJMake extends Command
             'controller' => $this->makeControllerInteractive(),
             'model' => $this->makeModelInteractive(),
             'views' => $this->call('msj:make:views'),
+            'auth' => $this->call('msj:make:auth'),
+            'save' => $this->call('msj:make:save'),
             default => Command::SUCCESS,
         };
     }
@@ -80,26 +87,7 @@ class MSJMake extends Command
 
     protected function makeCrudInteractive(): int
     {
-        $tables = $this->getAvailableTables();
-
-        if (! empty($tables)) {
-            $table = search(
-                label: 'Pilih Nama Tabel Database',
-                options: fn ($value) => ! empty($value)
-                    ? array_values(array_filter($tables, fn ($table) => stripos($table, $value) !== false))
-                    : array_slice($tables, 0, 15),
-                placeholder: 'Ketik untuk mencari tabel...'
-            );
-
-            if (! $table || ! in_array($table, $tables)) {
-                $this->badge('error', 'Tabel tidak valid!');
-
-                return Command::FAILURE;
-            }
-        } else {
-            $table = text('Masukkan Nama Tabel Database', required: true);
-        }
-
+        $table = $this->searchAndSelectTable();
         return $this->call('msj:make:crud', ['table' => $table]);
     }
 
@@ -112,41 +100,11 @@ class MSJMake extends Command
 
     protected function makeModelInteractive(): int
     {
-        $tables = $this->getAvailableTables();
-
-        if (! empty($tables)) {
-            $table = search(
-                label: 'Pilih Nama Tabel Database',
-                options: fn ($value) => ! empty($value)
-                    ? array_values(array_filter($tables, fn ($table) => stripos($table, $value) !== false))
-                    : array_slice($tables, 0, 15),
-                placeholder: 'Ketik untuk mencari tabel...'
-            );
-
-            if (! $table || ! in_array($table, $tables)) {
-                $this->badge('error', 'Tabel tidak valid!');
-
-                return Command::FAILURE;
-            }
-        } else {
-            $table = text('Masukkan Nama Tabel Database', required: true);
-        }
-
+        $table = $this->searchAndSelectTable();
         return $this->call('msj:make:model', ['table' => $table]);
     }
 
-    protected function getAvailableTables(): array
-    {
-        try {
-            $database = DB::connection()->getDatabaseName();
-            $tables = DB::select('SHOW TABLES');
-            $tableKey = "Tables_in_{$database}";
-
-            return array_map(fn ($table) => $table->$tableKey, $tables);
-        } catch (\Exception $e) {
-            return [];
-        }
-    }
+    // Method moved to HasDatabaseOperations trait
 
     protected function makeCrud(?string $table): int
     {
@@ -264,7 +222,7 @@ class MSJMake extends Command
     {
         $this->badge('error', "Tipe tidak dikenal: {$type}");
         $this->newLine();
-        $this->line('<fg=gray>Tipe yang tersedia:</> <fg=cyan>help, menu, crud, controller, model, views</>');
+        $this->line('<fg=gray>Tipe yang tersedia:</> <fg=cyan>help, menu, crud, controller, model, views, auth, save</>');
         $this->line('<fg=gray>Jalankan</> <fg=cyan>"php artisan msj:make"</> <fg=gray>untuk melihat semua perintah.</>');
         $this->line('<fg=gray>Jalankan</> <fg=cyan>"php artisan msj:make help"</> <fg=gray>untuk informasi lengkap.</>');
         $this->newLine();

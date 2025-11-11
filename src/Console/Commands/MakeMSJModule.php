@@ -91,14 +91,22 @@ class MakeMSJModule extends Command
             ->toArray();
 
         if (! empty($gmenuList)) {
-            $this->moduleData['gmenu'] = select(
+            $gmenuOptions = $gmenuList + ['__create_new__' => '+ Buat Group Menu Baru'];
+            
+            $selectedGmenu = select(
                 label: 'Pilih Kode Group Menu (gmenu)',
-                options: $gmenuList,
+                options: $gmenuOptions,
                 default: in_array('KOP001', array_keys($gmenuList)) ? 'KOP001' : array_key_first($gmenuList),
                 scroll: 10
             );
+            
+            if ($selectedGmenu === '__create_new__') {
+                $this->moduleData['gmenu'] = $this->createNewGmenuViaCommand();
+            } else {
+                $this->moduleData['gmenu'] = $selectedGmenu;
+            }
         } else {
-            $this->moduleData['gmenu'] = text('Masukkan Kode Group Menu (gmenu)', default: 'KOP001');
+            $this->moduleData['gmenu'] = $this->createNewGmenuViaCommand();
         }
 
         // DMenu dengan search untuk autocomplete
@@ -111,15 +119,23 @@ class MakeMSJModule extends Command
             ->toArray();
 
         if (! empty($dmenuList)) {
-            $this->moduleData['dmenu'] = search(
+            $dmenuOptions = array_merge(['__create_new__'], $dmenuList);
+            
+            $selectedDmenu = search(
                 label: 'Masukkan Kode Direktori Menu (dmenu)',
                 options: fn ($value) => ! empty($value)
-                    ? array_filter($dmenuList, fn ($dmenu) => stripos($dmenu, $value) !== false)
-                    : array_merge(['KOP999'], array_slice($dmenuList, 0, 9)),
-                placeholder: 'Ketik untuk mencari... (default: KOP999)'
-            ) ?: 'KOP999';
+                    ? array_filter($dmenuOptions, fn ($dmenu) => stripos($dmenu, $value) !== false)
+                    : array_merge(['__create_new__ (Buat Baru)'], array_slice($dmenuList, 0, 9)),
+                placeholder: 'Ketik untuk mencari atau pilih __create_new__ untuk buat baru'
+            );
+            
+            if ($selectedDmenu === '__create_new__' || $selectedDmenu === '__create_new__ (Buat Baru)') {
+                $this->moduleData['dmenu'] = $this->createNewDmenuViaCommand();
+            } else {
+                $this->moduleData['dmenu'] = $selectedDmenu ?: 'KOP999';
+            }
         } else {
-            $this->moduleData['dmenu'] = text('Masukkan Kode Direktori Menu (dmenu)', default: 'KOP999');
+            $this->moduleData['dmenu'] = $this->createNewDmenuViaCommand();
         }
 
         // Menu Name
@@ -481,7 +497,54 @@ class MakeMSJModule extends Command
         $this->newLine();
         $this->displayHeader('Generate Selesai', '🎉');
         $this->line("<fg=gray>📍 Akses menu Anda di:</> <fg=cyan;options=bold>/{$this->moduleData['url']}</>");
+        
+        // Auto save to seeder
+        $this->autoSaveToSeeder();
+        
         $this->newLine();
+    }
+
+    protected function autoSaveToSeeder(): void
+    {
+        $this->newLine();
+        $this->line('  <fg=bright-cyan>┌─ <fg=white;options=bold>💾 Auto Save to Seeder</>');
+        $this->line('  <fg=bright-cyan>│</>');
+        
+        if (confirm('Simpan konfigurasi menu ke seeder?', default: true)) {
+            $this->line('  <fg=bright-cyan>│</> <fg=yellow>⚡</> Menyimpan menu dan table config...');
+            
+            try {
+                // Generate prefix from gmenu/dmenu
+                $prefix = $this->generateSeederPrefix();
+                
+                // Save menus using new seeder command
+                $this->call('msj:make:seeder', [
+                    'type' => 'menu', 
+                    '--auto' => true,
+                    '--prefix' => $prefix,
+                    '--gmenu' => $this->moduleData['gmenu'],
+                    '--dmenu' => $this->moduleData['dmenu']
+                ]);
+                $this->line("  <fg=bright-cyan>│</> <fg=green>✓</> Menu berhasil disimpan ke {$prefix}MenuSeeder");
+                
+                // Save table config using new seeder command
+                $this->call('msj:make:seeder', [
+                    'type' => 'table', 
+                    '--auto' => true,
+                    '--prefix' => $prefix,
+                    '--gmenu' => $this->moduleData['gmenu'],
+                    '--dmenu' => $this->moduleData['dmenu']
+                ]);
+                $this->line("  <fg=bright-cyan>│</> <fg=green>✓</> Table config berhasil disimpan ke {$prefix}TableSeeder");
+                
+            } catch (\Exception $e) {
+                $this->line('  <fg=bright-cyan>│</> <fg=red>✗</> Error: ' . $e->getMessage());
+            }
+        } else {
+            $this->line('  <fg=bright-cyan>│</> <fg=gray>⊝</> Auto save dilewati');
+        }
+        
+        $this->line('  <fg=bright-cyan>└─</>');
     }
 
     protected function displayStep(string $step, string $title): void
@@ -504,5 +567,79 @@ class MakeMSJModule extends Command
     protected function displayError(string $message): void
     {
         $this->line("  <fg=red>✗</> {$message}");
+    }
+
+    protected function createNewGmenuViaCommand(): string
+    {
+        $this->newLine();
+        $this->line('  <fg=bright-cyan>│</> <fg=yellow>📝</> Membuat Group Menu Baru via Command');
+        
+        $exitCode = $this->call('msj:make:gmenu');
+        
+        if ($exitCode !== 0) {
+            $this->line('  <fg=bright-cyan>│</> <fg=red>✗</> Gagal membuat Group Menu');
+            return 'KOP001'; // fallback
+        }
+        
+        // Get the latest created gmenu
+        $latestGmenu = DB::table('sys_gmenu')
+            ->where('isactive', '1')
+            ->orderBy('created_at', 'desc')
+            ->first();
+            
+        return $latestGmenu ? $latestGmenu->gmenu : 'KOP001';
+    }
+
+    protected function createNewDmenuViaCommand(): string
+    {
+        $this->newLine();
+        $this->line('  <fg=bright-cyan>│</> <fg=yellow>📝</> Membuat Detail Menu Baru via Command');
+        
+        $gmenuCode = $this->moduleData['gmenu'] ?? 'KOP001';
+        
+        $exitCode = $this->call('msj:make:dmenu', ['--gmenu' => $gmenuCode]);
+        
+        if ($exitCode !== 0) {
+            $this->line('  <fg=bright-cyan>│</> <fg=red>✗</> Gagal membuat Detail Menu');
+            return 'KOP999'; // fallback
+        }
+        
+        // Get the latest created dmenu
+        $latestDmenu = DB::table('sys_dmenu')
+            ->where('isactive', '1')
+            ->where('gmenu', $gmenuCode)
+            ->orderBy('created_at', 'desc')
+            ->first();
+            
+        return $latestDmenu ? $latestDmenu->dmenu : 'KOP999';
+    }
+
+    protected function generateSeederPrefix(): string
+    {
+        $gmenu = $this->moduleData['gmenu'] ?? 'MSJ';
+        $dmenu = $this->moduleData['dmenu'] ?? '';
+        
+        // Generate smart prefix based on gmenu/dmenu
+        if (!empty($dmenu)) {
+            // Use dmenu as primary identifier
+            $prefix = Str::studly(str_replace(['_', '-'], '', $dmenu));
+        } else {
+            // Fallback to gmenu
+            $prefix = Str::studly(str_replace(['_', '-'], '', $gmenu));
+        }
+        
+        // Clean up common prefixes/suffixes
+        $prefix = preg_replace('/^(Kop|Msj|Sys)/', '', $prefix);
+        $prefix = preg_replace('/\d+$/', '', $prefix); // Remove trailing numbers
+        
+        // Ensure it's not empty and has reasonable length
+        if (empty($prefix) || strlen($prefix) < 2) {
+            $prefix = 'MSJ';
+        }
+        
+        // Capitalize first letter
+        $prefix = ucfirst($prefix);
+        
+        return $prefix;
     }
 }

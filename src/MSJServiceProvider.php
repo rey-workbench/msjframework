@@ -2,10 +2,15 @@
 
 namespace MSJFramework\LaravelGenerator;
 
+use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJAuth;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJController;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJCrud;
+use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJDmenu;
+use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJGmenu;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJModel;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJModule;
+use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJSave;
+use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJSeeder;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJViews;
 use MSJFramework\LaravelGenerator\Console\Commands\MSJMake;
 use Illuminate\Support\ServiceProvider;
@@ -23,6 +28,11 @@ class MSJServiceProvider extends ServiceProvider
                 MakeMSJController::class,
                 MakeMSJModel::class,
                 MakeMSJViews::class,
+                MakeMSJAuth::class,
+                MakeMSJSave::class,
+                MakeMSJSeeder::class,
+                MakeMSJGmenu::class,
+                MakeMSJDmenu::class,
             ]);
         }
 

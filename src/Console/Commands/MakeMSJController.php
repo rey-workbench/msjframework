@@ -3,16 +3,17 @@
 namespace MSJFramework\LaravelGenerator\Console\Commands;
 
 use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasConsoleStyling;
+use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasDatabaseOperations;
+use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasMenuOperations;
 use MSJFramework\LaravelGenerator\Services\MSJModuleGenerator;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
 class MakeMSJController extends Command
 {
-    use HasConsoleStyling;
+    use HasConsoleStyling, HasDatabaseOperations, HasMenuOperations;
 
     protected $signature = 'msj:make:controller {name} {--table= : Database table name} {--gmenu= : Group menu code} {--url= : URL slug}';
 
@@ -25,37 +26,10 @@ class MakeMSJController extends Command
         $name = $this->argument('name');
 
         // Table dengan select dari database
-        $tables = $this->getAvailableTables();
-        if (! empty($tables) && ! $this->option('table')) {
-            $tableOptions = array_combine($tables, $tables);
-            $table = select(
-                label: 'Pilih Nama Tabel Database',
-                options: $tableOptions,
-                default: in_array('mst_example', $tables) ? 'mst_example' : ($tables[0] ?? 'mst_example'),
-                scroll: 15
-            );
-        } else {
-            $table = $this->option('table') ?? text('Masukkan Nama Tabel', default: 'mst_example');
-        }
+        $table = $this->option('table') ?? $this->searchAndSelectTable('mst_example');
 
         // GMenu dengan select
-        $gmenuList = DB::table('sys_gmenu')
-            ->where('isactive', '1')
-            ->select('gmenu', 'name')
-            ->get()
-            ->mapWithKeys(fn ($item) => [$item->gmenu => "{$item->gmenu} - {$item->name}"])
-            ->toArray();
-
-        if (! empty($gmenuList) && ! $this->option('gmenu')) {
-            $gmenu = select(
-                label: 'Pilih Kode Group Menu (gmenu)',
-                options: $gmenuList,
-                default: in_array('KOP001', array_keys($gmenuList)) ? 'KOP001' : array_key_first($gmenuList),
-                scroll: 10
-            );
-        } else {
-            $gmenu = $this->option('gmenu') ?? text('Masukkan Kode Group Menu (gmenu)', default: 'KOP001');
-        }
+        $gmenu = $this->option('gmenu') ?? $this->selectOrCreateGmenu('KOP001');
 
         $url = $this->option('url') ?? text('Masukkan Slug URL', required: true);
 
@@ -96,16 +70,5 @@ class MakeMSJController extends Command
         return Command::SUCCESS;
     }
 
-    protected function getAvailableTables(): array
-    {
-        try {
-            $database = DB::connection()->getDatabaseName();
-            $tables = DB::select('SHOW TABLES');
-            $tableKey = "Tables_in_{$database}";
-
-            return array_map(fn ($table) => $table->$tableKey, $tables);
-        } catch (\Exception $e) {
-            return [];
-        }
-    }
+    // Method moved to HasDatabaseOperations trait
 }

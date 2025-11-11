@@ -1,0 +1,57 @@
+<?php
+
+namespace MSJFramework\LaravelGenerator\Console\Commands;
+
+use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasConsoleStyling;
+use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasValidation;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+
+use function Laravel\Prompts\text;
+
+class MakeMSJGmenu extends Command
+{
+    use HasConsoleStyling, HasValidation;
+
+    protected $signature = 'msj:make:gmenu {code?} {name?} {--urut=1}';
+    protected $description = 'Create new Group Menu (gmenu)';
+
+    public function handle(): int
+    {
+        $this->displayHeader('Create Group Menu');
+
+        $gmenuCode = $this->argument('code') ?: text(
+            label: 'Kode Group Menu (gmenu)',
+            placeholder: 'KOP001',
+            required: true,
+            validate: fn($value) => $this->validateGmenuCode($value)
+        );
+
+        $gmenuName = $this->argument('name') ?: text(
+            label: 'Nama Group Menu',
+            placeholder: 'Master Data',
+            required: true,
+            validate: fn($value) => $this->validateName($value)
+        );
+
+        $gmenuUrut = (int) ($this->option('urut') ?: text(
+            label: 'Urutan',
+            default: '1',
+            validate: fn($value) => $this->validateNumeric($value)
+        ));
+
+        // Insert ke database
+        DB::table('sys_gmenu')->insert([
+            'gmenu' => $gmenuCode,
+            'name' => $gmenuName,
+            'urut' => $gmenuUrut,
+            'isactive' => '1',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->badge('success', "Group Menu '{$gmenuCode} - {$gmenuName}' berhasil dibuat");
+
+        return Command::SUCCESS;
+    }
+}
