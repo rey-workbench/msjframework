@@ -303,39 +303,14 @@ class MSJBaseController extends BaseController
 
         $exporter = new TableExporter;
 
-        if ($module === 'reportrekap') {
-            $referer = request()->header('referer', '');
-            $reportType = null;
-
-            if (preg_match('/\/reportrekap\/show\/(\w+)/', $referer, $matches)) {
-                $reportType = $matches[1];
-            } else {
-                $sessionKeys = array_keys(session()->all());
-                foreach ($sessionKeys as $key) {
-                    if (str_starts_with($key, 'generated_report_')) {
-                        $reportType = str_replace('generated_report_', '', $key);
-                        break;
-                    }
-                }
-            }
-
-            if (! $reportType) {
-                abort(400, 'Report type tidak dapat ditentukan. Pastikan Anda mengakses export dari halaman laporan yang valid.');
-            }
-
-            $tableHeaders = DB::table('sys_table')
-                ->where(['gmenu' => $data['gmenuid'], 'dmenu' => $data['dmenu'], 'list' => '1'])
-                ->where(function ($query) use ($reportType) {
-                    $query->where('note', 'LIKE', "%{$reportType}%")
-                        ->orWhere('note', '');
-                })
-                ->orderBy('urut')
-                ->get();
-
+        $exportConfig = $data['export_config'] ?? [];
+        if (isset($exportConfig['table_headers'])) {
+            $tableHeaders = $exportConfig['table_headers'];
         } else {
-            $tableHeaders = $data['table_header'];
+            $tableHeaders = $data['table_header'] ?? collect();
         }
 
+        // Get table details
         $tableDetails = $data['table_detail'] ?? collect();
 
         if (method_exists($tableDetails, 'items')) {
@@ -344,21 +319,7 @@ class MSJBaseController extends BaseController
             $tableDetails = collect($tableDetails);
         }
 
-        $title = $data['title_menu'] ?? 'Export Data';
-
-        if ($module === 'reportrekap') {
-            $reportNames = [
-                'pinjaman' => 'Laporan Pinjaman',
-                'shu' => 'Laporan SHU',
-                'potongan' => 'Laporan Potongan',
-                'debitkredit' => 'Laporan Debit & Kredit',
-            ];
-
-            if (isset($reportNames[$reportType])) {
-                $title = $reportNames[$reportType];
-            }
-        }
-
+        $title = $exportConfig['title'] ?? $data['title_menu'];
         $exportTotals = $data['export_totals'] ?? [];
 
         return match ($type) {
