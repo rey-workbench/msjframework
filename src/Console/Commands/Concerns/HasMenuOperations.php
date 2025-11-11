@@ -27,12 +27,12 @@ trait HasMenuOperations
             return $defaultGmenu;
         }
 
-        $gmenuOptions = $gmenus + ['__create_new__' => '+ Buat Group Menu Baru'];
+        $gmenuOptions = ['__create_new__' => '+ Buat Group Menu Baru'] + $gmenus;
 
         $selectedGmenu = select(
             label: 'Pilih Group Menu (gmenu)',
             options: $gmenuOptions,
-            default: array_key_first($gmenus),
+            default: '__create_new__',
             scroll: 10
         );
 

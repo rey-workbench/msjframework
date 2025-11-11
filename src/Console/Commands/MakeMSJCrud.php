@@ -56,12 +56,12 @@ class MakeMSJCrud extends Command
             ->toArray();
 
         if (! empty($gmenuList) && ! $this->option('gmenu')) {
-            $gmenuOptions = $gmenuList + ['__create_new__' => '+ Buat Group Menu Baru'];
+            $gmenuOptions = ['__create_new__' => '+ Buat Group Menu Baru'] + $gmenuList;
             
             $selectedGmenu = select(
                 label: 'Pilih Kode Group Menu (gmenu)',
                 options: $gmenuOptions,
-                default: in_array('KOP001', array_keys($gmenuList)) ? 'KOP001' : array_key_first($gmenuList),
+                default: '__create_new__',
                 scroll: 10
             );
             
@@ -93,7 +93,7 @@ class MakeMSJCrud extends Command
                 $selectedDmenu = select(
                     label: 'Pilih Kode Direktori Menu (dmenu)',
                     options: $dmenuOptions,
-                    default: 'KOP999',
+                    default: '__create_new__',
                     scroll: 10
                 );
                 

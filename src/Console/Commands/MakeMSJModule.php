@@ -91,12 +91,12 @@ class MakeMSJModule extends Command
             ->toArray();
 
         if (! empty($gmenuList)) {
-            $gmenuOptions = $gmenuList + ['__create_new__' => '+ Buat Group Menu Baru'];
+            $gmenuOptions = ['__create_new__' => '+ Buat Group Menu Baru'] + $gmenuList;
             
             $selectedGmenu = select(
                 label: 'Pilih Kode Group Menu (gmenu)',
                 options: $gmenuOptions,
-                default: in_array('KOP001', array_keys($gmenuList)) ? 'KOP001' : array_key_first($gmenuList),
+                default: '__create_new__',
                 scroll: 10
             );
             
@@ -119,17 +119,16 @@ class MakeMSJModule extends Command
             ->toArray();
 
         if (! empty($dmenuList)) {
-            $dmenuOptions = array_merge(['__create_new__'], $dmenuList);
+            $dmenuOptions = ['__create_new__' => '+ Buat Detail Menu Baru'] + array_combine($dmenuList, $dmenuList);
             
-            $selectedDmenu = search(
-                label: 'Masukkan Kode Direktori Menu (dmenu)',
-                options: fn ($value) => ! empty($value)
-                    ? array_filter($dmenuOptions, fn ($dmenu) => stripos($dmenu, $value) !== false)
-                    : array_merge(['__create_new__ (Buat Baru)'], array_slice($dmenuList, 0, 9)),
-                placeholder: 'Ketik untuk mencari atau pilih __create_new__ untuk buat baru'
+            $selectedDmenu = select(
+                label: 'Pilih Kode Detail Menu (dmenu)',
+                options: $dmenuOptions,
+                default: '__create_new__',
+                scroll: 10
             );
             
-            if ($selectedDmenu === '__create_new__' || $selectedDmenu === '__create_new__ (Buat Baru)') {
+            if ($selectedDmenu === '__create_new__') {
                 $this->moduleData['dmenu'] = $this->createNewDmenuViaCommand();
             } else {
                 $this->moduleData['dmenu'] = $selectedDmenu ?: 'KOP999';
@@ -141,7 +140,6 @@ class MakeMSJModule extends Command
         // Menu Name
         $this->moduleData['menu_name'] = text('Masukkan Nama Menu', default: 'Data Example', required: true);
 
-        // URL dengan auto-suggest dari menu_name
         $suggestedUrl = Str::slug($this->moduleData['menu_name']);
         $this->moduleData['url'] = text(
             label: 'Masukkan URL',
