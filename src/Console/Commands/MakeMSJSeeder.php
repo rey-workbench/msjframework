@@ -42,7 +42,7 @@ class MakeMSJSeeder extends Command
             'table' => $this->generateTableSeeder($prefix),
             'auth' => $this->generateAuthSeeder($prefix),
             'complete' => $this->generateCompleteSeeder($prefix),
-            default => $this->error("Unknown seeder type: {$type}")
+            default => $this->badge('error', "Unknown seeder type: {$type}")
         };
     }
 
@@ -94,7 +94,7 @@ class MakeMSJSeeder extends Command
             ->first();
 
         if ($recentDmenu) {
-            $this->info("Auto-detected dari menu terbaru: {$recentDmenu->dmenu}");
+            $this->badge('info', "Auto-detected dari menu terbaru: {$recentDmenu->dmenu}");
             return $this->generateSmartPrefix($recentDmenu->dmenu);
         }
 
@@ -215,7 +215,7 @@ class MakeMSJSeeder extends Command
     {
         if (File::exists($path)) {
             if ($this->option('auto')) {
-                $this->warn("File {$filename} sudah ada, akan ditimpa...");
+                $this->badge('warning', "File {$filename} sudah ada, akan ditimpa...");
                 return true;
             } else {
                 return confirm("File {$filename} sudah ada. Timpa?");

@@ -62,7 +62,7 @@ class MakeMSJAuth extends Command
 
     protected function createRole()
     {
-        $this->info('=== Membuat Role Baru ===');
+        $this->displayHeader('Create Role');
 
         $idroles = text(
             label: 'ID Role (max 6 karakter):',
@@ -103,20 +103,20 @@ class MakeMSJAuth extends Command
                 'updated_at' => now(),
             ]);
 
-            $this->info("✅ Role '{$name}' berhasil dibuat dengan ID: {$idroles}");
+            $this->badge('success', "Role '{$name}' berhasil dibuat dengan ID: {$idroles}");
         } catch (\Exception $e) {
-            $this->error("❌ Gagal membuat role: " . $e->getMessage());
+            $this->badge('error', "Gagal membuat role: " . $e->getMessage());
         }
     }
 
     protected function createAuth()
     {
-        $this->info('=== Membuat Authorization Baru ===');
+        $this->displayHeader('Create Authorization');
 
         // Get available roles
         $roles = DB::table('sys_roles')->where('isactive', '1')->pluck('name', 'idroles')->toArray();
         if (empty($roles)) {
-            $this->error('Tidak ada role yang tersedia. Buat role terlebih dahulu.');
+            $this->badge('error', 'Tidak ada role yang tersedia. Buat role terlebih dahulu.');
             return;
         }
 
@@ -128,7 +128,7 @@ class MakeMSJAuth extends Command
         // Get available group menus
         $gmenus = DB::table('sys_gmenu')->where('isactive', '1')->pluck('name', 'gmenu')->toArray();
         if (empty($gmenus)) {
-            $this->error('Tidak ada group menu yang tersedia.');
+            $this->badge('error', 'Tidak ada group menu yang tersedia.');
             return;
         }
 
@@ -145,7 +145,7 @@ class MakeMSJAuth extends Command
             ->toArray();
 
         if (empty($dmenus)) {
-            $this->error('Tidak ada detail menu yang tersedia untuk group menu ini.');
+            $this->badge('error', 'Tidak ada detail menu yang tersedia untuk group menu ini.');
             return;
         }
 
@@ -162,7 +162,7 @@ class MakeMSJAuth extends Command
             ->exists();
 
         if ($exists) {
-            $this->error('Authorization untuk kombinasi ini sudah ada!');
+            $this->badge('error', 'Authorization untuk kombinasi ini sudah ada!');
             return;
         }
 
@@ -228,18 +228,18 @@ class MakeMSJAuth extends Command
             $gmenuName = $gmenus[$gmenu];
             $dmenuName = $dmenus[$dmenu];
 
-            $this->info("✅ Authorization berhasil dibuat untuk:");
-            $this->info("   Role: {$roleName}");
-            $this->info("   Group Menu: {$gmenuName}");
-            $this->info("   Detail Menu: {$dmenuName}");
+            $this->badge('success', "Authorization berhasil dibuat untuk:");
+            $this->badge('info', "   Role: {$roleName}");
+            $this->badge('info', "   Group Menu: {$gmenuName}");
+            $this->badge('info', "   Detail Menu: {$dmenuName}");
         } catch (\Exception $e) {
-            $this->error("❌ Gagal membuat authorization: " . $e->getMessage());
+            $this->badge('error', "Gagal membuat authorization: " . $e->getMessage());
         }
     }
 
     protected function createUser()
     {
-        $this->info('=== Membuat User Baru ===');
+        $this->displayHeader('Create User');
 
         $name = text(
             label: 'Nama Depan:',
@@ -282,7 +282,7 @@ class MakeMSJAuth extends Command
         // Get available roles
         $roles = DB::table('sys_roles')->where('isactive', '1')->pluck('name', 'idroles')->toArray();
         if (empty($roles)) {
-            $this->error('Tidak ada role yang tersedia. Buat role terlebih dahulu.');
+            $this->badge('error', 'Tidak ada role yang tersedia. Buat role terlebih dahulu.');
             return;
         }
 
@@ -307,30 +307,30 @@ class MakeMSJAuth extends Command
 
             $roleNames = array_intersect_key($roles, array_flip($selectedRoles));
 
-            $this->info("✅ User '{$name}' berhasil dibuat:");
-            $this->info("   Username: {$username}");
-            $this->info("   Email: {$email}");
-            $this->info("   Roles: " . implode(', ', $roleNames));
+            $this->badge('success', "User '{$name}' berhasil dibuat:");
+            $this->badge('info', "   Username: {$username}");
+            $this->badge('info', "   Email: {$email}");
+            $this->badge('info', "   Roles: " . implode(', ', $roleNames));
         } catch (\Exception $e) {
-            $this->error("❌ Gagal membuat user: " . $e->getMessage());
+            $this->badge('error', "Gagal membuat user: " . $e->getMessage());
         }
     }
 
     protected function createAll()
     {
-        $this->info('=== Membuat Role, Auth, dan User Lengkap ===');
+        $this->displayHeader('Create All');
 
         if (confirm('Apakah Anda ingin membuat data auth lengkap?')) {
-            $this->info('1. Membuat Role...');
+            $this->badge('info', '1. Membuat Role...');
             $this->createRole();
 
-            $this->info('2. Membuat Authorization...');
+            $this->badge('info', '2. Membuat Authorization...');
             $this->createAuth();
 
-            $this->info('3. Membuat User...');
+            $this->badge('info', '3. Membuat User...');
             $this->createUser();
 
-            $this->info('✅ Semua data auth berhasil dibuat!');
+            $this->badge('success', 'Semua data auth berhasil dibuat!');
         }
     }
 }
