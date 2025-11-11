@@ -60,15 +60,24 @@ class MakeMSJDmenu extends Command
             validate: fn($value) => $this->validateNumeric($value)
         ));
 
-        // Insert ke database
+        // Insert ke database dengan semua field yang diperlukan
         DB::table('sys_dmenu')->insert([
             'dmenu' => $dmenuCode,
             'gmenu' => $gmenuCode,
-            'name' => $dmenuName,
             'urut' => $dmenuUrut,
+            'name' => $dmenuName,
+            'icon' => null,
+            'url' => '', // Empty string untuk field yang required tapi bisa kosong
+            'tabel' => null,
+            'layout' => 'master',
+            'sub' => null,
+            'show' => '1',
+            'js' => '0',
             'isactive' => '1',
             'created_at' => now(),
             'updated_at' => now(),
+            'user_create' => 'msj:make:dmenu',
+            'user_update' => null,
         ]);
 
         $this->badge('success', "Detail Menu '{$dmenuCode} - {$dmenuName}' berhasil dibuat");
