@@ -43,11 +43,13 @@ class MakeMSJGmenu extends Command
         // Insert ke database
         DB::table('sys_gmenu')->insert([
             'gmenu' => $gmenuCode,
-            'name' => $gmenuName,
             'urut' => $gmenuUrut,
+            'name' => $gmenuName,
+            'icon' => null,
             'isactive' => '1',
             'created_at' => now(),
             'updated_at' => now(),
+            'user_create' => 'msj:make:gmenu',
         ]);
 
         $this->badge('success', "Group Menu '{$gmenuCode} - {$gmenuName}' berhasil dibuat");
