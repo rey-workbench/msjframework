@@ -9,6 +9,7 @@ use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJModule;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJViews;
 use MSJFramework\LaravelGenerator\Console\Commands\MSJMake;
 use Illuminate\Support\ServiceProvider;
+use function config_path;
 
 class MSJServiceProvider extends ServiceProvider
 {

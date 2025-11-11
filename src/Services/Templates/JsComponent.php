@@ -7,6 +7,8 @@ use MSJFramework\LaravelGenerator\Services\Templates\Components\FormatComponent;
 use MSJFramework\LaravelGenerator\Services\Templates\Components\FormComponent;
 use MSJFramework\LaravelGenerator\Services\Templates\Components\InputComponent;
 use MSJFramework\LaravelGenerator\Services\Templates\Components\SwalComponent;
+use Illuminate\Support\Facades\File;
+use function resource_path;
 
 class JsComponent
 {

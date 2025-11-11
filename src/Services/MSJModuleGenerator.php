@@ -16,6 +16,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
+// Import Laravel helper functions
+use function app_path;
+use function resource_path;
+use function config_path;
+use function base_path;
+use function storage_path;
+use function public_path;
+
 class MSJModuleGenerator
 {
     protected array $config;

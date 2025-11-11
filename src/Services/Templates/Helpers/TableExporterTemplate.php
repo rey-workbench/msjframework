@@ -2,6 +2,9 @@
 
 namespace MSJFramework\LaravelGenerator\Services\Templates\Helpers;
 
+use Illuminate\Support\Facades\File;
+use function app_path;
+
 class TableExporterTemplate
 {
     public static function getTemplate(): string
