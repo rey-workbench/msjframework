@@ -41,18 +41,30 @@ class CrossPlatformPrompt
     public static function text(string $label, string $default = '', bool $required = false, ?Command $command = null): string
     {
         if (self::isWindowsNative() && $command) {
-            // Display styled prompt header for Windows
+            // Display beautiful styled prompt for Windows
             $command->newLine();
-            $command->getOutput()->writeln(" <fg=cyan>┌─ {$label} ─" . str_repeat('─', max(0, 60 - mb_strlen($label))) . '┐</>');
+            
+            // Header with icon and label
+            $boxWidth = 64;
+            $labelLen = mb_strlen($label);
+            $padding = $boxWidth - $labelLen - 4;
+            $command->getOutput()->writeln(" <fg=cyan>┌─</> <fg=bright-cyan>{$label}</> <fg=cyan>" . str_repeat('─', max(0, $padding)) . '┐</>');
             
             $helper = $command->getHelper('question');
-            $defaultDisplay = $default ? " [<fg=gray>{$default}</>]" : '';
-            $question = new Question(" <fg=cyan>│</> {$defaultDisplay} ", $default);
+            
+            // Show default value hint if exists
+            if ($default) {
+                $command->getOutput()->writeln(" <fg=cyan>│</> <fg=gray>Default: {$default}</>");
+            }
+            
+            // Show required indicator
+            $requiredMark = $required ? '<fg=red>*</>' : '';
+            $question = new Question(" <fg=cyan>│</> {$requiredMark} <fg=bright-white>", $default);
             
             if ($required) {
-                $question->setValidator(function ($answer) {
+                $question->setValidator(function ($answer) use ($label) {
                     if (empty($answer)) {
-                        throw new \RuntimeException('This field is required.');
+                        throw new \RuntimeException("✗ {$label} is required.");
                     }
                     return $answer;
                 });
@@ -67,8 +79,8 @@ class CrossPlatformPrompt
             
             $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
             
-            // Display styled prompt footer for Windows
-            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', 62) . '┘</>');
+            // Display styled footer with success indicator
+            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', $boxWidth) . '┘</>');
             
             return $result;
         }
@@ -83,13 +95,42 @@ class CrossPlatformPrompt
     public static function select(string $label, array $options, mixed $default = null, int $scroll = 10, ?Command $command = null): mixed
     {
         if (self::isWindowsNative() && $command) {
-            // Display styled prompt header for Windows
+            // Display Laravel Prompts-style select for Windows
             $command->newLine();
-            $command->getOutput()->writeln(" <fg=cyan>┌─ {$label} ─" . str_repeat('─', max(0, 60 - mb_strlen($label))) . '┐</>');
+            
+            // Label dengan styling
+            $labelWidth = 120;
+            $labelPadding = str_repeat('.', max(0, $labelWidth - mb_strlen($label) - 1));
+            $command->getOutput()->writeln("  <fg=green>{$label}</> <fg=gray>{$labelPadding}</>");
+            
+            // Display options dengan nomor list
+            $optionKeys = array_keys($options);
+            
+            foreach ($optionKeys as $index => $key) {
+                $value = $options[$key];
+                $command->getOutput()->writeln("  <fg=cyan>[{$index}]</> <fg=white>{$value}</>");
+            }
+            
+            // Arrow prompt seperti Laravel
+            $command->getOutput()->write("  <fg=cyan>❯</> ");
             
             $helper = $command->getHelper('question');
-            $question = new ChoiceQuestion(' │ ', $options, $default);
-            $question->setErrorMessage('Selection %s is invalid.');
+            
+            // Simple input tanpa label tambahan
+            $defaultDisplay = is_numeric($default) ? $default : array_search($default, $optionKeys);
+            $question = new Question('', $defaultDisplay);
+            
+            // Validator
+            $question->setValidator(function ($answer) use ($options) {
+                if (!is_numeric($answer)) {
+                    throw new \RuntimeException('Please enter a valid number.');
+                }
+                $index = (int)$answer;
+                if ($index < 0 || $index >= count($options)) {
+                    throw new \RuntimeException('Number out of range (0-' . (count($options) - 1) . ')');
+                }
+                return $answer;
+            });
             
             // Use reflection to access protected properties
             $reflection = new \ReflectionClass($command);
@@ -98,10 +139,11 @@ class CrossPlatformPrompt
             $inputProp->setAccessible(true);
             $outputProp->setAccessible(true);
             
-            $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            $selectedIndex = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
             
-            // Display styled prompt footer for Windows
-            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', 62) . '┘</>');
+            // Get the actual value by index
+            $optionKeys = array_keys($options);
+            $result = $optionKeys[(int)$selectedIndex];
             
             return $result;
         }
@@ -116,10 +158,12 @@ class CrossPlatformPrompt
     public static function confirm(string $label, bool $default = true, ?Command $command = null): bool
     {
         if (self::isWindowsNative() && $command) {
-            // Display styled prompt for Windows
+            // Display beautiful styled confirm for Windows
             $command->newLine();
-            $defaultText = $default ? 'Y/n' : 'y/N';
-            $command->getOutput()->write(" <fg=cyan>?</> {$label} <fg=gray>({$defaultText})</> ");
+            $defaultText = $default ? '<fg=green>Yes</> / <fg=gray>no</>' : '<fg=gray>yes</> / <fg=red>No</>';
+            $icon = '<fg=cyan>?</>';
+            
+            $command->getOutput()->write(" {$icon} <fg=bright-white>{$label}</> <fg=gray>({$defaultText})</> <fg=cyan>›</> ");
             
             $helper = $command->getHelper('question');
             $question = new ConfirmationQuestion('', $default);
@@ -131,7 +175,15 @@ class CrossPlatformPrompt
             $inputProp->setAccessible(true);
             $outputProp->setAccessible(true);
             
-            return $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            
+            // Show result with icon
+            $resultIcon = $result ? '<fg=green>✓</>' : '<fg=red>✗</>';
+            $resultText = $result ? '<fg=green>Yes</>' : '<fg=red>No</>';
+            $command->getOutput()->write("\r <fg=gray>│</> {$resultIcon} {$resultText}");
+            $command->newLine();
+            
+            return $result;
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -159,18 +211,62 @@ class CrossPlatformPrompt
     public static function multiselect(string $label, array $options, array $default = [], int $scroll = 10, ?Command $command = null): array
     {
         if (self::isWindowsNative() && $command) {
-            // Display styled prompt header for Windows
+            // Display Laravel Prompts-style multiselect for Windows
             $command->newLine();
-            $command->getOutput()->writeln(" <fg=cyan>┌─ {$label} ─" . str_repeat('─', max(0, 60 - mb_strlen($label))) . '┐</>');
-            $command->getOutput()->writeln(" <fg=cyan>│</> <fg=gray>Pilih multiple (pisahkan dengan koma)</>");
+            
+            // Label dengan styling
+            $labelWidth = 120;
+            $labelPadding = str_repeat('.', max(0, $labelWidth - mb_strlen($label) - 1));
+            $command->getOutput()->writeln("  <fg=green>{$label}</> <fg=gray>{$labelPadding}</>");
+            $command->getOutput()->writeln("  <fg=gray>(comma-separated numbers)</>");
+            
+            // Display options dengan nomor list
+            $optionKeys = array_keys($options);
+            
+            foreach ($optionKeys as $index => $key) {
+                $value = $options[$key];
+                $command->getOutput()->writeln("  <fg=cyan>[{$index}]</> <fg=white>{$value}</>");
+            }
+            
+            // Arrow prompt seperti Laravel
+            $command->getOutput()->write("  <fg=cyan>❯</> ");
             
             $helper = $command->getHelper('question');
-            $question = new ChoiceQuestion(
-                ' │ ',
-                $options,
-                implode(',', $default)
-            );
-            $question->setMultiselect(true);
+            
+            // Convert default to comma-separated numbers
+            $defaultNumbers = [];
+            foreach ($default as $def) {
+                if (is_numeric($def)) {
+                    $defaultNumbers[] = $def;
+                } else {
+                    $idx = array_search($def, $optionKeys);
+                    if ($idx !== false) {
+                        $defaultNumbers[] = $idx;
+                    }
+                }
+            }
+            $defaultDisplay = implode(',', $defaultNumbers);
+            
+            $question = new Question('', $defaultDisplay);
+            
+            // Validator
+            $question->setValidator(function ($answer) use ($options) {
+                if (empty($answer)) {
+                    return '';
+                }
+                
+                $numbers = array_map('trim', explode(',', $answer));
+                foreach ($numbers as $num) {
+                    if (!is_numeric($num)) {
+                        throw new \RuntimeException('Invalid format. Use comma-separated numbers');
+                    }
+                    $index = (int)$num;
+                    if ($index < 0 || $index >= count($options)) {
+                        throw new \RuntimeException('Number out of range (0-' . (count($options) - 1) . ')');
+                    }
+                }
+                return $answer;
+            });
             
             // Use reflection to access protected properties
             $reflection = new \ReflectionClass($command);
@@ -179,12 +275,20 @@ class CrossPlatformPrompt
             $inputProp->setAccessible(true);
             $outputProp->setAccessible(true);
             
-            $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            $selectedNumbers = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
             
-            // Display styled prompt footer for Windows
-            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', 62) . '┘</>');
+            // Convert numbers back to keys
+            $result = [];
+            if (!empty($selectedNumbers)) {
+                $numbers = array_map('trim', explode(',', $selectedNumbers));
+                $optionKeys = array_keys($options);
+                foreach ($numbers as $num) {
+                    $index = (int)$num;
+                    $result[] = $optionKeys[$index];
+                }
+            }
             
-            return is_array($result) ? $result : [];
+            return $result;
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -197,13 +301,21 @@ class CrossPlatformPrompt
     public static function password(string $label, string $placeholder = '', $validate = null, ?Command $command = null): string
     {
         if (self::isWindowsNative() && $command) {
-            // Display styled prompt for Windows
+            // Display beautiful styled password for Windows
             $command->newLine();
-            $command->getOutput()->writeln(" <fg=cyan>┌─ {$label} ─" . str_repeat('─', max(0, 60 - mb_strlen($label))) . '┐</>');
+            
+            // Header with icon and label
+            $boxWidth = 64;
+            $labelLen = mb_strlen($label);
+            $padding = $boxWidth - $labelLen - 4;
+            $command->getOutput()->writeln(" <fg=cyan>┌─</> <fg=bright-cyan>{$label}</> <fg=cyan>" . str_repeat('─', max(0, $padding)) . '┐</>');
+            
+            if ($placeholder) {
+                $command->getOutput()->writeln(" <fg=cyan>│</> <fg=gray>{$placeholder}</>");
+            }
             
             $helper = $command->getHelper('question');
-            $placeholderText = $placeholder ? " <fg=gray>({$placeholder})</>" : '';
-            $question = new Question(" <fg=cyan>│</>{$placeholderText} ", '');
+            $question = new Question(" <fg=cyan>│</> <fg=yellow>🔒</> <fg=bright-white>", '');
             $question->setHidden(true);
             $question->setHiddenFallback(false);
             
@@ -220,8 +332,11 @@ class CrossPlatformPrompt
             
             $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
             
-            // Display styled prompt footer for Windows
-            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', 62) . '┘</>');
+            // Display styled footer with masked preview
+            $maskedLength = mb_strlen($result);
+            $maskedPreview = $maskedLength > 0 ? str_repeat('•', min($maskedLength, 12)) : '<fg=gray>(empty)</>';
+            $command->getOutput()->writeln(" <fg=cyan>│</> <fg=gray>{$maskedPreview}</>");
+            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', $boxWidth) . '┘</>');
             
             return $result;
         }
