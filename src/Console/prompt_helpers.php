@@ -48,24 +48,7 @@ if (!function_exists('prompt_multiselect')) {
      */
     function prompt_multiselect(string $label, array $options, array $default = [], int $scroll = 10, $command = null): array
     {
-        if (CrossPlatformPrompt::isWindowsNative() && $command) {
-            $helper = $command->getHelper('question');
-            $question = new \Symfony\Component\Console\Question\ChoiceQuestion(
-                $label . ' (comma-separated) ',
-                $options,
-                implode(',', $default)
-            );
-            $question->setMultiselect(true);
-            
-            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
-            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
-            
-            $result = $helper->ask($input, $output, $question);
-            return is_array($result) ? $result : [];
-        }
-
-        // Use Laravel Prompts on Linux/macOS/WSL
-        return \Laravel\Prompts\multiselect($label, $options, $default, $scroll);
+        return CrossPlatformPrompt::multiselect($label, $options, $default, $scroll, $command);
     }
 }
 
@@ -75,23 +58,6 @@ if (!function_exists('prompt_password')) {
      */
     function prompt_password(string $label, string $placeholder = '', $validate = null, $command = null): string
     {
-        if (CrossPlatformPrompt::isWindowsNative() && $command) {
-            $helper = $command->getHelper('question');
-            $question = new \Symfony\Component\Console\Question\Question($label . ' ');
-            $question->setHidden(true);
-            $question->setHiddenFallback(false);
-            
-            if ($validate) {
-                $question->setValidator($validate);
-            }
-            
-            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
-            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
-            
-            return $helper->ask($input, $output, $question);
-        }
-
-        // Use Laravel Prompts on Linux/macOS/WSL
-        return \Laravel\Prompts\password($label, $placeholder, '', false, $validate);
+        return CrossPlatformPrompt::password($label, $placeholder, $validate, $command);
     }
 }

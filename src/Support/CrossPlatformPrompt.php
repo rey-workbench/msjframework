@@ -53,10 +53,14 @@ class CrossPlatformPrompt
                 });
             }
             
-            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
-            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
+            // Use reflection to access protected properties
+            $reflection = new \ReflectionClass($command);
+            $inputProp = $reflection->getProperty('input');
+            $outputProp = $reflection->getProperty('output');
+            $inputProp->setAccessible(true);
+            $outputProp->setAccessible(true);
             
-            return $helper->ask($input, $output, $question);
+            return $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -73,10 +77,14 @@ class CrossPlatformPrompt
             $question = new ChoiceQuestion($label . ' ', $options, $default);
             $question->setErrorMessage('Selection %s is invalid.');
             
-            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
-            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
+            // Use reflection to access protected properties
+            $reflection = new \ReflectionClass($command);
+            $inputProp = $reflection->getProperty('input');
+            $outputProp = $reflection->getProperty('output');
+            $inputProp->setAccessible(true);
+            $outputProp->setAccessible(true);
             
-            return $helper->ask($input, $output, $question);
+            return $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -92,10 +100,14 @@ class CrossPlatformPrompt
             $helper = $command->getHelper('question');
             $question = new ConfirmationQuestion($label . ' (yes/no) ', $default);
             
-            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
-            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
+            // Use reflection to access protected properties
+            $reflection = new \ReflectionClass($command);
+            $inputProp = $reflection->getProperty('input');
+            $outputProp = $reflection->getProperty('output');
+            $inputProp->setAccessible(true);
+            $outputProp->setAccessible(true);
             
-            return $helper->ask($input, $output, $question);
+            return $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -115,6 +127,64 @@ class CrossPlatformPrompt
 
         // Use Laravel Prompts on Linux/macOS/WSL
         return \Laravel\Prompts\search($label, $options, $placeholder);
+    }
+
+    /**
+     * Safe multiselect prompt that works on all platforms.
+     */
+    public static function multiselect(string $label, array $options, array $default = [], int $scroll = 10, ?Command $command = null): array
+    {
+        if (self::isWindowsNative() && $command) {
+            $helper = $command->getHelper('question');
+            $question = new ChoiceQuestion(
+                $label . ' (comma-separated) ',
+                $options,
+                implode(',', $default)
+            );
+            $question->setMultiselect(true);
+            
+            // Use reflection to access protected properties
+            $reflection = new \ReflectionClass($command);
+            $inputProp = $reflection->getProperty('input');
+            $outputProp = $reflection->getProperty('output');
+            $inputProp->setAccessible(true);
+            $outputProp->setAccessible(true);
+            
+            $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            return is_array($result) ? $result : [];
+        }
+
+        // Use Laravel Prompts on Linux/macOS/WSL
+        return \Laravel\Prompts\multiselect($label, $options, $default, $scroll);
+    }
+
+    /**
+     * Safe password prompt that works on all platforms.
+     */
+    public static function password(string $label, string $placeholder = '', $validate = null, ?Command $command = null): string
+    {
+        if (self::isWindowsNative() && $command) {
+            $helper = $command->getHelper('question');
+            $question = new Question($label . ' ');
+            $question->setHidden(true);
+            $question->setHiddenFallback(false);
+            
+            if ($validate) {
+                $question->setValidator($validate);
+            }
+            
+            // Use reflection to access protected properties
+            $reflection = new \ReflectionClass($command);
+            $inputProp = $reflection->getProperty('input');
+            $outputProp = $reflection->getProperty('output');
+            $inputProp->setAccessible(true);
+            $outputProp->setAccessible(true);
+            
+            return $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+        }
+
+        // Use Laravel Prompts on Linux/macOS/WSL
+        return \Laravel\Prompts\password($label, $placeholder, '', false, $validate);
     }
 
     /**
