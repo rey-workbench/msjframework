@@ -26,7 +26,11 @@ class MakeMSJModule extends Command
     public function handle(): int
     {
         $this->displayWelcomeBox();
-        $this->collectModuleData();
+        
+        $result = $this->collectModuleData();
+        if ($result !== Command::SUCCESS) {
+            return $result;
+        }
 
         if (! $this->confirmGeneration()) {
             return Command::SUCCESS;
@@ -42,12 +46,19 @@ class MakeMSJModule extends Command
         $this->displayHeader('MSJ Menu Generator');
     }
 
-    protected function collectModuleData(): void
+    protected function collectModuleData(): int
     {
         $this->collectLayoutType();
-        $this->collectBasicInfo();
+        
+        $result = $this->collectBasicInfo();
+        if ($result !== Command::SUCCESS) {
+            return $result;
+        }
+        
         $this->collectFieldsConfig();
         $this->displaySummary();
+        
+        return Command::SUCCESS;
     }
 
     protected function collectLayoutType(): void
@@ -75,7 +86,7 @@ class MakeMSJModule extends Command
         $this->newLine(2);
     }
 
-    protected function collectBasicInfo(): void
+    protected function collectBasicInfo(): int
     {
         $this->displayStep('Step 2/4', 'Informasi Dasar');
 
@@ -189,6 +200,8 @@ class MakeMSJModule extends Command
 
         $this->displaySuccess('Informasi dasar telah dikumpulkan dan validasi tabel berhasil');
         $this->newLine(2);
+        
+        return Command::SUCCESS;
     }
 
     protected function getAvailableTables(): array
