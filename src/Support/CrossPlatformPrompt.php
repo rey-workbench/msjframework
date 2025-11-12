@@ -41,8 +41,13 @@ class CrossPlatformPrompt
     public static function text(string $label, string $default = '', bool $required = false, ?Command $command = null): string
     {
         if (self::isWindowsNative() && $command) {
+            // Display styled prompt header for Windows
+            $command->newLine();
+            $command->getOutput()->writeln(" <fg=cyan>┌─ {$label} ─" . str_repeat('─', max(0, 60 - mb_strlen($label))) . '┐</>');
+            
             $helper = $command->getHelper('question');
-            $question = new Question($label . ' ', $default);
+            $defaultDisplay = $default ? " [<fg=gray>{$default}</>]" : '';
+            $question = new Question(" <fg=cyan>│</> {$defaultDisplay} ", $default);
             
             if ($required) {
                 $question->setValidator(function ($answer) {
@@ -60,7 +65,12 @@ class CrossPlatformPrompt
             $inputProp->setAccessible(true);
             $outputProp->setAccessible(true);
             
-            return $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            
+            // Display styled prompt footer for Windows
+            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', 62) . '┘</>');
+            
+            return $result;
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -73,8 +83,12 @@ class CrossPlatformPrompt
     public static function select(string $label, array $options, mixed $default = null, int $scroll = 10, ?Command $command = null): mixed
     {
         if (self::isWindowsNative() && $command) {
+            // Display styled prompt header for Windows
+            $command->newLine();
+            $command->getOutput()->writeln(" <fg=cyan>┌─ {$label} ─" . str_repeat('─', max(0, 60 - mb_strlen($label))) . '┐</>');
+            
             $helper = $command->getHelper('question');
-            $question = new ChoiceQuestion($label . ' ', $options, $default);
+            $question = new ChoiceQuestion(' │ ', $options, $default);
             $question->setErrorMessage('Selection %s is invalid.');
             
             // Use reflection to access protected properties
@@ -84,7 +98,12 @@ class CrossPlatformPrompt
             $inputProp->setAccessible(true);
             $outputProp->setAccessible(true);
             
-            return $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            
+            // Display styled prompt footer for Windows
+            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', 62) . '┘</>');
+            
+            return $result;
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -97,8 +116,13 @@ class CrossPlatformPrompt
     public static function confirm(string $label, bool $default = true, ?Command $command = null): bool
     {
         if (self::isWindowsNative() && $command) {
+            // Display styled prompt for Windows
+            $command->newLine();
+            $defaultText = $default ? 'Y/n' : 'y/N';
+            $command->getOutput()->write(" <fg=cyan>?</> {$label} <fg=gray>({$defaultText})</> ");
+            
             $helper = $command->getHelper('question');
-            $question = new ConfirmationQuestion($label . ' (yes/no) ', $default);
+            $question = new ConfirmationQuestion('', $default);
             
             // Use reflection to access protected properties
             $reflection = new \ReflectionClass($command);
@@ -135,9 +159,14 @@ class CrossPlatformPrompt
     public static function multiselect(string $label, array $options, array $default = [], int $scroll = 10, ?Command $command = null): array
     {
         if (self::isWindowsNative() && $command) {
+            // Display styled prompt header for Windows
+            $command->newLine();
+            $command->getOutput()->writeln(" <fg=cyan>┌─ {$label} ─" . str_repeat('─', max(0, 60 - mb_strlen($label))) . '┐</>');
+            $command->getOutput()->writeln(" <fg=cyan>│</> <fg=gray>Pilih multiple (pisahkan dengan koma)</>");
+            
             $helper = $command->getHelper('question');
             $question = new ChoiceQuestion(
-                $label . ' (comma-separated) ',
+                ' │ ',
                 $options,
                 implode(',', $default)
             );
@@ -151,6 +180,10 @@ class CrossPlatformPrompt
             $outputProp->setAccessible(true);
             
             $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            
+            // Display styled prompt footer for Windows
+            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', 62) . '┘</>');
+            
             return is_array($result) ? $result : [];
         }
 
@@ -164,8 +197,13 @@ class CrossPlatformPrompt
     public static function password(string $label, string $placeholder = '', $validate = null, ?Command $command = null): string
     {
         if (self::isWindowsNative() && $command) {
+            // Display styled prompt for Windows
+            $command->newLine();
+            $command->getOutput()->writeln(" <fg=cyan>┌─ {$label} ─" . str_repeat('─', max(0, 60 - mb_strlen($label))) . '┐</>');
+            
             $helper = $command->getHelper('question');
-            $question = new Question($label . ' ');
+            $placeholderText = $placeholder ? " <fg=gray>({$placeholder})</>" : '';
+            $question = new Question(" <fg=cyan>│</>{$placeholderText} ", '');
             $question->setHidden(true);
             $question->setHiddenFallback(false);
             
@@ -180,7 +218,12 @@ class CrossPlatformPrompt
             $inputProp->setAccessible(true);
             $outputProp->setAccessible(true);
             
-            return $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            $result = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
+            
+            // Display styled prompt footer for Windows
+            $command->getOutput()->writeln(" <fg=cyan>└" . str_repeat('─', 62) . '┘</>');
+            
+            return $result;
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
