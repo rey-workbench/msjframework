@@ -11,6 +11,7 @@
 Thumbs.db
 update-namespace.php
 
+setup-git.sh
 reset-tags.sh
 PACKAGIST_UPDATE.md
 update-packagist.sh

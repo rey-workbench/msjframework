@@ -8,9 +8,8 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
+// These automatically fallback to Symfony Console on Windows
 
 class MakeMSJCrud extends Command
 {
@@ -31,7 +30,7 @@ class MakeMSJCrud extends Command
 
         // Layout dengan select
         if (! $this->option('layout')) {
-            $layout = select(
+            $layout = prompt_select(
                 label: 'Pilih Layout',
                 options: [
                     'manual' => 'Manual (kontrol penuh & Views Manual)',
@@ -41,7 +40,8 @@ class MakeMSJCrud extends Command
                     'report' => 'Report (Bawaan MSJ Framework & Views Report)',
                 ],
                 default: 'manual',
-                scroll: 10
+                scroll: 10,
+                command: $this
             );
         } else {
             $layout = $this->option('layout');
@@ -58,11 +58,12 @@ class MakeMSJCrud extends Command
         if (! empty($gmenuList) && ! $this->option('gmenu')) {
             $gmenuOptions = ['__create_new__' => '+ Buat Group Menu Baru'] + $gmenuList;
             
-            $selectedGmenu = select(
+            $selectedGmenu = prompt_select(
                 label: 'Pilih Kode Group Menu (gmenu)',
                 options: $gmenuOptions,
                 default: '__create_new__',
-                scroll: 10
+                scroll: 10,
+                command: $this
             );
             
             if ($selectedGmenu === '__create_new__') {
@@ -90,11 +91,12 @@ class MakeMSJCrud extends Command
             if (! empty($dmenuList)) {
                 $dmenuOptions = ['__create_new__' => '+ Buat Detail Menu Baru'] + array_combine($dmenuList, $dmenuList);
                 
-                $selectedDmenu = select(
+                $selectedDmenu = prompt_select(
                     label: 'Pilih Kode Direktori Menu (dmenu)',
                     options: $dmenuOptions,
                     default: '__create_new__',
-                    scroll: 10
+                    scroll: 10,
+                    command: $this
                 );
                 
                 if ($selectedDmenu === '__create_new__') {
@@ -139,7 +141,13 @@ class MakeMSJCrud extends Command
         $generator->setConfig($config);
 
         $this->section('Generate CRUD');
-        $this->line("<fg=gray>Table:</> <fg=white>{$table}</>");
+        
+        if ($this->isWindowsNative()) {
+            $this->line("Table: {$table}");
+        } else {
+            $this->line("<fg=gray>Table:</> <fg=white>{$table}</>");
+        }
+        
         $this->newLine();
 
         $results = [
@@ -181,8 +189,14 @@ class MakeMSJCrud extends Command
         }
 
         $this->newLine();
-        $this->displayHeader('Generate Selesai', '🎉');
-        $this->line("<fg=gray>📍 Akses menu Anda di:</> <fg=cyan;options=bold>/{$url}</>");
+        $this->displayHeader('Generate Selesai');
+        
+        if ($this->isWindowsNative()) {
+            $this->line("Akses menu Anda di: /{$url}");
+        } else {
+            $this->line("<fg=gray>📍 Akses menu Anda di:</> <fg=cyan>/{$url}</>");
+        }
+        
         $this->newLine();
     }
 
@@ -191,8 +205,12 @@ class MakeMSJCrud extends Command
         $this->newLine();
         $this->section('💾 Auto Save to Seeder');
         
-        if (confirm('Simpan konfigurasi menu ke seeder?', default: true)) {
-            $this->line('<fg=yellow>⚡ Menyimpan menu dan table config...</>');
+        if (prompt_confirm('Simpan konfigurasi menu ke seeder?', default: true, command: $this)) {
+            if ($this->isWindowsNative()) {
+                $this->line('Menyimpan menu dan table config...');
+            } else {
+                $this->line('<fg=yellow>⚡ Menyimpan menu dan table config...</>');
+            }
             
             try {
                 // Generate prefix from gmenu/dmenu
@@ -219,8 +237,14 @@ class MakeMSJCrud extends Command
                 $this->badge('success', "Table config berhasil disimpan ke {$prefix}TableSeeder");
                 
                 $this->newLine();
-                $this->line("<fg=gray>💡 Tip: Jalankan</> <fg=cyan>php artisan db:seed --class={$prefix}MenuSeeder</> <fg=gray>untuk restore menu</> ");
-                $this->line("<fg=gray>💡 Tip: Jalankan</> <fg=cyan>php artisan db:seed --class={$prefix}TableSeeder</> <fg=gray>untuk restore table config</> ");
+                
+                if ($this->isWindowsNative()) {
+                    $this->line("Tip: Jalankan php artisan db:seed --class={$prefix}MenuSeeder untuk restore menu");
+                    $this->line("Tip: Jalankan php artisan db:seed --class={$prefix}TableSeeder untuk restore table config");
+                } else {
+                    $this->line("<fg=gray>💡 Tip: Jalankan</> <fg=cyan>php artisan db:seed --class={$prefix}MenuSeeder</> <fg=gray>untuk restore menu</> ");
+                    $this->line("<fg=gray>💡 Tip: Jalankan</> <fg=cyan>php artisan db:seed --class={$prefix}TableSeeder</> <fg=gray>untuk restore table config</> ");
+                }
                 
             } catch (\Exception $e) {
                 $this->badge('error', 'Error: ' . $e->getMessage());

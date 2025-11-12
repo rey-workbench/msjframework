@@ -330,7 +330,7 @@ class MakeMSJModule extends Command
 
         $this->newLine();
         $this->table(
-            ['<fg=cyan;options=bold>Property</>', '<fg=cyan;options=bold>Value</>'],
+            ['<fg=cyan>Property</>', '<fg=cyan>Value</>'],
             [
                 ['<fg=gray>Layout</>', "<fg=white>{$this->moduleData['layout']}</>"],
                 ['<fg=gray>Group Menu</>', "<fg=white>{$this->moduleData['gmenu']}</>"],
@@ -361,7 +361,7 @@ class MakeMSJModule extends Command
         ], $this->moduleData['fields']);
 
         $this->table(
-            ['<fg=cyan;options=bold>Field</>', '<fg=cyan;options=bold>Alias</>', '<fg=cyan;options=bold>Type</>', '<fg=cyan;options=bold>Primary</>'],
+            ['<fg=cyan>Field</>', '<fg=cyan>Alias</>', '<fg=cyan>Type</>', '<fg=cyan>Primary</>'],
             $rows
         );
     }
@@ -406,7 +406,7 @@ class MakeMSJModule extends Command
     protected function displayValidationSection(): void
     {
         $this->newLine();
-        $this->line('  <fg=bright-cyan>┌─ <fg=white;options=bold>⚡ Validation</>');
+        $this->line('  <fg=bright-cyan>┌─ <fg=white>⚡ Validation</>');
         $this->line('  <fg=bright-cyan>│</>');
     }
 
@@ -422,7 +422,7 @@ class MakeMSJModule extends Command
 
     protected function displayValidationWarnings(array $warnings): bool
     {
-        $this->line('  <fg=bright-cyan>│</> <fg=yellow>⚠</> <fg=yellow;options=bold>Warnings detected:</>');
+        $this->line('  <fg=bright-cyan>│</> <fg=yellow>⚠</> <fg=yellow>Warnings detected:</>');
         foreach ($warnings as $warning) {
             $this->line("  <fg=bright-cyan>│</> <fg=gray>  •</> {$warning}");
         }
@@ -441,7 +441,7 @@ class MakeMSJModule extends Command
     protected function displayGenerationSection(): void
     {
         $this->newLine();
-        $this->line('  <fg=bright-cyan>┌─ <fg=white;options=bold>MenGenerate Module</>');
+        $this->line('  <fg=bright-cyan>┌─ <fg=white>MenGenerate Module</>');
         $this->line('  <fg=bright-cyan>│</>');
     }
 
@@ -494,7 +494,7 @@ class MakeMSJModule extends Command
     {
         $this->newLine();
         $this->displayHeader('Generate Selesai', '🎉');
-        $this->line("<fg=gray>📍 Akses menu Anda di:</> <fg=cyan;options=bold>/{$this->moduleData['url']}</>");
+        $this->line("<fg=gray>📍 Akses menu Anda di:</> <fg=cyan>/{$this->moduleData['url']}</>");
         
         // Auto save to seeder
         $this->autoSaveToSeeder();
@@ -505,7 +505,7 @@ class MakeMSJModule extends Command
     protected function autoSaveToSeeder(): void
     {
         $this->newLine();
-        $this->line('  <fg=bright-cyan>┌─ <fg=white;options=bold>💾 Auto Save to Seeder</>');
+        $this->line('  <fg=bright-cyan>┌─ <fg=white>💾 Auto Save to Seeder</>');
         $this->line('  <fg=bright-cyan>│</>');
         
         if (confirm('Simpan konfigurasi menu ke seeder?', default: true)) {
@@ -548,7 +548,7 @@ class MakeMSJModule extends Command
     protected function displayStep(string $step, string $title): void
     {
         $this->newLine();
-        $this->line("  <fg=bright-cyan>┌─ <fg=white;options=bold>{$step}: {$title}</>");
+        $this->line("  <fg=bright-cyan>┌─ <fg=white>{$step}: {$title}</>");
         $this->line('  <fg=bright-cyan>│</>');
     }
 
