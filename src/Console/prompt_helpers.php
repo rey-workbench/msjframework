@@ -57,7 +57,10 @@ if (!function_exists('prompt_multiselect')) {
             );
             $question->setMultiselect(true);
             
-            $result = $helper->ask($command->input, $command->output, $question);
+            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
+            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
+            
+            $result = $helper->ask($input, $output, $question);
             return is_array($result) ? $result : [];
         }
 
@@ -82,7 +85,10 @@ if (!function_exists('prompt_password')) {
                 $question->setValidator($validate);
             }
             
-            return $helper->ask($command->input, $command->output, $question);
+            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
+            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
+            
+            return $helper->ask($input, $output, $question);
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL

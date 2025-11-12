@@ -53,7 +53,10 @@ class CrossPlatformPrompt
                 });
             }
             
-            return $helper->ask($command->input, $command->output, $question);
+            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
+            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
+            
+            return $helper->ask($input, $output, $question);
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -70,7 +73,10 @@ class CrossPlatformPrompt
             $question = new ChoiceQuestion($label . ' ', $options, $default);
             $question->setErrorMessage('Selection %s is invalid.');
             
-            return $helper->ask($command->input, $command->output, $question);
+            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
+            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
+            
+            return $helper->ask($input, $output, $question);
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -86,7 +92,10 @@ class CrossPlatformPrompt
             $helper = $command->getHelper('question');
             $question = new ConfirmationQuestion($label . ' (yes/no) ', $default);
             
-            return $helper->ask($command->input, $command->output, $question);
+            $input = method_exists($command, 'getInput') ? $command->getInput() : $command->input;
+            $output = method_exists($command, 'getOutput') ? $command->getOutput() : $command->output;
+            
+            return $helper->ask($input, $output, $question);
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
