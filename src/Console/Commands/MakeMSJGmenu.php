@@ -7,7 +7,7 @@ use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasValidation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
 
 class MakeMSJGmenu extends Command
 {
@@ -20,35 +20,54 @@ class MakeMSJGmenu extends Command
     {
         $this->displayHeader('Create Group Menu');
 
-        $gmenuCode = $this->argument('code') ?: text(
+        // Note: Laravel Prompts validate callback not supported in fallback mode
+        // Manual validation after input
+        $gmenuCode = $this->argument('code') ?: prompt_text(
             label: 'Kode Group Menu (gmenu)',
-            placeholder: 'KOP001 (case insensitive)',
+            default: 'KOP001',
             required: true,
-            validate: function($value) {
-                $validation = $this->validateGmenuCode($value, 6);
-                if ($validation) return $validation;
-                
-                // Check duplicate
-                if ($this->gmenuExists($value) || $this->gmenuExists(strtoupper($value)) || $this->gmenuExists(strtolower($value))) {
-                    return "Kode gmenu '{$value}' sudah ada";
-                }
-                
-                return null;
-            }
+            command: $this
         );
+        
+        // Validate gmenu code
+        $validation = $this->validateGmenuCode($gmenuCode, 6);
+        if ($validation) {
+            $this->badge('error', $validation);
+            return Command::FAILURE;
+        }
+        
+        // Check duplicate
+        if ($this->gmenuExists($gmenuCode) || $this->gmenuExists(strtoupper($gmenuCode)) || $this->gmenuExists(strtolower($gmenuCode))) {
+            $this->badge('error', "Kode gmenu '{$gmenuCode}' sudah ada");
+            return Command::FAILURE;
+        }
 
-        $gmenuName = $this->argument('name') ?: text(
+        $gmenuName = $this->argument('name') ?: prompt_text(
             label: 'Nama Group Menu',
-            placeholder: 'Master Data',
+            default: 'Master Data',
             required: true,
-            validate: fn($value) => $this->validateName($value, 2, 25) // Max 25 chars
+            command: $this
         );
+        
+        // Validate name
+        $validation = $this->validateName($gmenuName, 2, 25);
+        if ($validation) {
+            $this->badge('error', $validation);
+            return Command::FAILURE;
+        }
 
-        $gmenuUrut = (int) ($this->option('urut') ?: text(
+        $gmenuUrut = (int) ($this->option('urut') ?: prompt_text(
             label: 'Urutan',
             default: '1',
-            validate: fn($value) => $this->validateNumeric($value)
+            required: false,
+            command: $this
         ));
+        
+        // Validate numeric
+        if (!is_numeric($gmenuUrut)) {
+            $this->badge('error', 'Urutan harus berupa angka');
+            return Command::FAILURE;
+        }
 
         // Insert ke database
         DB::table('sys_gmenu')->insert([

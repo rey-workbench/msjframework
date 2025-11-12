@@ -5,9 +5,7 @@ namespace MSJFramework\LaravelGenerator\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
 
 class MakeMSJSave extends Command
 {
@@ -19,7 +17,7 @@ class MakeMSJSave extends Command
         $type = $this->argument('type');
 
         if (!$type) {
-            $type = select(
+            $type = prompt_select(
                 'Pilih tipe data yang ingin disimpan:',
                 [
                     'roles' => 'Roles (sys_roles)',
@@ -28,7 +26,8 @@ class MakeMSJSave extends Command
                     'menus' => 'Menus (sys_gmenu & sys_dmenu)',
                     'tables' => 'Table Config (sys_table)',
                     'complete' => 'Complete Setup (semua data)',
-                ]
+                ],
+                command: $this
             );
         }
 
@@ -63,10 +62,10 @@ class MakeMSJSave extends Command
     {
         $this->info('=== Menyimpan Data Roles ===');
 
-        $prefix = text(
+        $prefix = prompt_text(
             label: 'Prefix untuk nama seeder:',
-            placeholder: 'MSJ',
-            default: 'MSJ'
+            default: 'MSJ',
+            command: $this
         );
 
         $roles = DB::table('sys_roles')->where('isactive', '1')->get();
@@ -82,7 +81,7 @@ class MakeMSJSave extends Command
         $content = $this->generateRoleSeeder($seederName, $roles);
 
         if (File::exists($path)) {
-            if (!confirm("File {$seederName}.php sudah ada. Timpa?")) {
+            if (!prompt_confirm("File {$seederName}.php sudah ada. Timpa?", command: $this)) {
                 return;
             }
         }
@@ -95,10 +94,10 @@ class MakeMSJSave extends Command
     {
         $this->info('=== Menyimpan Data Authorization ===');
 
-        $prefix = text(
+        $prefix = prompt_text(
             label: 'Prefix untuk nama seeder:',
-            placeholder: 'MSJ',
-            default: 'MSJ'
+            default: 'MSJ',
+            command: $this
         );
 
         $auths = DB::table('sys_auth')
@@ -120,7 +119,7 @@ class MakeMSJSave extends Command
         $content = $this->generateAuthSeeder($seederName, $auths);
 
         if (File::exists($path)) {
-            if (!confirm("File {$seederName}.php sudah ada. Timpa?")) {
+            if (!prompt_confirm("File {$seederName}.php sudah ada. Timpa?", command: $this)) {
                 return;
             }
         }
@@ -133,10 +132,10 @@ class MakeMSJSave extends Command
     {
         $this->info('=== Menyimpan Data Users ===');
 
-        $prefix = text(
+        $prefix = prompt_text(
             label: 'Prefix untuk nama seeder:',
-            placeholder: 'MSJ',
-            default: 'MSJ'
+            default: 'MSJ',
+            command: $this
         );
 
         $users = DB::table('users')->where('isactive', '1')->get();
@@ -152,7 +151,7 @@ class MakeMSJSave extends Command
         $content = $this->generateUserSeeder($seederName, $users);
 
         if (File::exists($path)) {
-            if (!confirm("File {$seederName}.php sudah ada. Timpa?")) {
+            if (!prompt_confirm("File {$seederName}.php sudah ada. Timpa?", command: $this)) {
                 return;
             }
         }
@@ -223,13 +222,13 @@ class MakeMSJSave extends Command
     {
         $this->info('=== Menyimpan Complete Setup ===');
 
-        $prefix = text(
+        $prefix = prompt_text(
             label: 'Prefix untuk nama seeder:',
-            placeholder: 'MSJ',
-            default: 'MSJ'
+            default: 'MSJ',
+            command: $this
         );
 
-        if (confirm('Apakah Anda ingin membuat semua seeder?')) {
+        if (prompt_confirm('Apakah Anda ingin membuat semua seeder?', command: $this)) {
             $this->saveRoles();
             $this->saveAuth();
             $this->saveUsers();
@@ -243,7 +242,7 @@ class MakeMSJSave extends Command
             $content = $this->generateCompleteSeeder($seederName, $prefix);
 
             if (File::exists($path)) {
-                if (!confirm("File {$seederName}.php sudah ada. Timpa?")) {
+                if (!prompt_confirm("File {$seederName}.php sudah ada. Timpa?", command: $this)) {
                     return;
                 }
             }
@@ -709,7 +708,7 @@ PHP;
                 $this->warn("File {$filename} sudah ada, akan ditimpa...");
                 return true;
             } else {
-                return confirm("File {$filename} sudah ada. Timpa?");
+                return prompt_confirm("File {$filename} sudah ada. Timpa?", command: $this);
             }
         }
         return true;

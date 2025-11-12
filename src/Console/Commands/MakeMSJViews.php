@@ -7,8 +7,7 @@ use MSJFramework\LaravelGenerator\Services\MSJModuleGenerator;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
 
 class MakeMSJViews extends Command
 {
@@ -31,33 +30,35 @@ class MakeMSJViews extends Command
             ->toArray();
 
         if (! empty($gmenuList) && ! $this->option('gmenu')) {
-            $gmenu = select(
+            $gmenu = prompt_select(
                 label: 'Pilih Kode Group Menu (gmenu)',
                 options: $gmenuList,
                 default: in_array('KOP001', array_keys($gmenuList)) ? 'KOP001' : array_key_first($gmenuList),
-                scroll: 10
+                scroll: 10,
+                command: $this
             );
         } else {
-            $gmenu = $this->option('gmenu') ?? text('Masukkan Kode Group Menu (gmenu)', default: 'KOP001');
+            $gmenu = $this->option('gmenu') ?? prompt_text('Masukkan Kode Group Menu (gmenu)', default: 'KOP001', command: $this);
         }
 
-        $url = $this->option('url') ?? text('Masukkan Slug URL', required: true);
+        $url = $this->option('url') ?? prompt_text('Masukkan Slug URL', required: true, command: $this);
 
         // Table dengan select dari database
         $tables = $this->getAvailableTables();
         if (! empty($tables) && ! $this->option('table')) {
             $tableOptions = array_combine($tables, $tables);
-            $table = select(
+            $table = prompt_select(
                 label: 'Pilih Nama Tabel Database',
                 options: $tableOptions,
                 default: in_array('mst_example', $tables) ? 'mst_example' : ($tables[0] ?? 'mst_example'),
-                scroll: 15
+                scroll: 15,
+                command: $this
             );
         } else {
-            $table = $this->option('table') ?? text('Masukkan Nama Tabel', default: 'mst_example');
+            $table = $this->option('table') ?? prompt_text('Masukkan Nama Tabel', default: 'mst_example', command: $this);
         }
 
-        $dmenu = text('Masukkan Direktori Menu (dmenu)', default: 'KOP999');
+        $dmenu = prompt_text('Masukkan Direktori Menu (dmenu)', default: 'KOP999', command: $this);
 
         $generator = new MSJModuleGenerator;
         $columns = $generator->getTableColumns($table);

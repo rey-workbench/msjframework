@@ -3,9 +3,7 @@
 namespace MSJFramework\LaravelGenerator\Console\Commands\Concerns;
 
 use Illuminate\Support\Str;
-use function Laravel\Prompts\search;
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
 
 trait HasMenuOperations
 {
@@ -29,11 +27,12 @@ trait HasMenuOperations
 
         $gmenuOptions = ['__create_new__' => '+ Buat Group Menu Baru'] + $gmenus;
 
-        $selectedGmenu = select(
+        $selectedGmenu = prompt_select(
             label: 'Pilih Group Menu (gmenu)',
             options: $gmenuOptions,
             default: '__create_new__',
-            scroll: 10
+            scroll: 10,
+            command: $this
         );
 
         if ($selectedGmenu === '__create_new__') {
@@ -61,11 +60,12 @@ trait HasMenuOperations
 
         $dmenuOptions = ['__create_new__' => '+ Buat Detail Menu Baru'] + $dmenus;
 
-        $selectedDmenu = select(
+        $selectedDmenu = prompt_select(
             label: 'Pilih Detail Menu (dmenu)',
             options: $dmenuOptions,
             default: '__create_new__',
-            scroll: 10
+            scroll: 10,
+            command: $this
         );
 
         if ($selectedDmenu === '__create_new__') {
@@ -83,10 +83,11 @@ trait HasMenuOperations
         $tables = $this->getAvailableTables();
 
         if (empty($tables)) {
-            return text(
+            return prompt_text(
                 label: 'Masukkan Nama Tabel Database',
                 default: $defaultTable ?? 'mst_example',
-                required: true
+                required: true,
+                command: $this
             );
         }
 
@@ -94,12 +95,13 @@ trait HasMenuOperations
             return $defaultTable;
         }
 
-        $selectedTable = search(
+        $selectedTable = prompt_search(
             label: 'Pilih Nama Tabel Database',
             options: fn ($value) => !empty($value)
                 ? array_values(array_filter($tables, fn ($table) => stripos($table, $value) !== false))
                 : array_slice($tables, 0, 15),
-            placeholder: 'Ketik untuk mencari tabel...'
+            placeholder: 'Ketik untuk mencari tabel...',
+            command: $this
         );
 
         return is_string($selectedTable) && in_array($selectedTable, $tables)

@@ -13,7 +13,7 @@ use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJSave;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJSeeder;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJViews;
 use MSJFramework\LaravelGenerator\Console\Commands\MSJMake;
-use MSJFramework\LaravelGenerator\Console\WindowsFallbackConfigurator;
+use MSJFramework\LaravelGenerator\Support\WindowsPromptFallback;
 use Illuminate\Support\ServiceProvider;
 use function config_path;
 
@@ -22,8 +22,7 @@ class MSJServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Configure Laravel Prompts fallback for Windows native only
-        // Laravel Prompts works natively on macOS, Linux, and Windows with WSL
-        (new WindowsFallbackConfigurator($this->app))->configure();
+        (new WindowsPromptFallback($this->app))->configure();
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -54,10 +53,8 @@ class MSJServiceProvider extends ServiceProvider
             'msj-generator'
         );
 
-        // Load helper functions
-        if (file_exists(__DIR__.'/Console/helpers.php')) {
-            require_once __DIR__.'/Console/helpers.php';
-        }
+        // Load prompt helper functions
+        require_once __DIR__.'/Console/prompt_helpers.php';
     }
 }
 

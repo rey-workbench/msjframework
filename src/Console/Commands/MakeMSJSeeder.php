@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
-use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\select;
+// Import safe prompt helpers that work on all platforms
 
 class MakeMSJSeeder extends Command
 {
@@ -23,7 +22,7 @@ class MakeMSJSeeder extends Command
         $type = $this->argument('type');
         
         if (!$type) {
-            $type = select(
+            $type = prompt_select(
                 label: 'Pilih tipe seeder',
                 options: [
                     'menu' => 'Menu Seeder (gmenu + dmenu)',
@@ -31,7 +30,8 @@ class MakeMSJSeeder extends Command
                     'auth' => 'Auth Seeder (roles + permissions)',
                     'complete' => 'Complete Seeder (semua)',
                 ],
-                default: 'menu'
+                default: 'menu',
+                command: $this
             );
         }
 
@@ -218,7 +218,7 @@ class MakeMSJSeeder extends Command
                 $this->badge('warning', "File {$filename} sudah ada, akan ditimpa...");
                 return true;
             } else {
-                return confirm("File {$filename} sudah ada. Timpa?");
+                return prompt_confirm("File {$filename} sudah ada. Timpa?", command: $this);
             }
         }
         return true;

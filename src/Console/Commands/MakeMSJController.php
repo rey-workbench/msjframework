@@ -8,8 +8,7 @@ use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasMenuOperations;
 use MSJFramework\LaravelGenerator\Services\MSJModuleGenerator;
 use Illuminate\Console\Command;
 
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
 
 class MakeMSJController extends Command
 {
@@ -31,7 +30,7 @@ class MakeMSJController extends Command
         // GMenu dengan select
         $gmenu = $this->option('gmenu') ?? $this->selectOrCreateGmenu('KOP001');
 
-        $url = $this->option('url') ?? text('Masukkan Slug URL', required: true);
+        $url = $this->option('url') ?? prompt_text('Masukkan Slug URL', required: true, command: $this);
 
         $generator = new MSJModuleGenerator;
         $columns = $generator->getTableColumns($table);

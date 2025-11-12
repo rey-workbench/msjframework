@@ -1,13 +1,13 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Console\Helpers;
+namespace MSJFramework\LaravelGenerator\Support;
 
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 
-class PromptHelper
+class CrossPlatformPrompt
 {
     /**
      * Detect if running on Windows native (not WSL).

@@ -8,10 +8,8 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\search;
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
+// These automatically fallback to Symfony Console on Windows
 
 class MakeMSJModule extends Command
 {
@@ -65,11 +63,12 @@ class MakeMSJModule extends Command
         ];
 
         $this->newLine();
-        $this->moduleData['layout'] = select(
+        $this->moduleData['layout'] = prompt_select(
             label: 'Pilih Layout',
             options: $layouts,
             default: 'manual',
-            scroll: 10
+            scroll: 10,
+            command: $this
         );
 
         $this->displaySuccess("Layout yang dipilih adalah: {$this->moduleData['layout']}");
@@ -93,11 +92,12 @@ class MakeMSJModule extends Command
         if (! empty($gmenuList)) {
             $gmenuOptions = ['__create_new__' => '+ Buat Group Menu Baru'] + $gmenuList;
             
-            $selectedGmenu = select(
+            $selectedGmenu = prompt_select(
                 label: 'Pilih Kode Group Menu (gmenu)',
                 options: $gmenuOptions,
                 default: '__create_new__',
-                scroll: 10
+                scroll: 10,
+                command: $this
             );
             
             if ($selectedGmenu === '__create_new__') {
@@ -121,11 +121,12 @@ class MakeMSJModule extends Command
         if (! empty($dmenuList)) {
             $dmenuOptions = ['__create_new__' => '+ Buat Detail Menu Baru'] + array_combine($dmenuList, $dmenuList);
             
-            $selectedDmenu = select(
+            $selectedDmenu = prompt_select(
                 label: 'Pilih Kode Detail Menu (dmenu)',
                 options: $dmenuOptions,
                 default: '__create_new__',
-                scroll: 10
+                scroll: 10,
+                command: $this
             );
             
             if ($selectedDmenu === '__create_new__') {
@@ -138,24 +139,26 @@ class MakeMSJModule extends Command
         }
 
         // Menu Name
-        $this->moduleData['menu_name'] = text('Masukkan Nama Menu', default: 'Data Example', required: true);
+        $this->moduleData['menu_name'] = prompt_text('Masukkan Nama Menu', default: 'Data Example', required: true, command: $this);
 
         $suggestedUrl = Str::slug($this->moduleData['menu_name']);
-        $this->moduleData['url'] = text(
+        $this->moduleData['url'] = prompt_text(
             label: 'Masukkan URL',
             default: $suggestedUrl,
-            placeholder: $suggestedUrl
+            required: false,
+            command: $this
         );
 
         // Table dengan search dari database
         $tables = $this->getAvailableTables();
         if (! empty($tables)) {
-            $selectedTable = search(
+            $selectedTable = prompt_search(
                 label: 'Pilih Nama Tabel Database',
                 options: fn ($value) => ! empty($value)
                     ? array_values(array_filter($tables, fn ($table) => stripos($table, $value) !== false))
                     : array_slice($tables, 0, 15),
-                placeholder: 'Ketik untuk mencari tabel...'
+                placeholder: 'Ketik untuk mencari tabel...',
+                command: $this
             );
 
             // Validasi hasil search
@@ -163,7 +166,7 @@ class MakeMSJModule extends Command
                 ? $selectedTable
                 : (in_array('mst_example', $tables) ? 'mst_example' : ($tables[0] ?? 'mst_example'));
         } else {
-            $this->moduleData['table'] = text('Masukkan Nama Tabel Database', default: 'mst_example', required: true);
+            $this->moduleData['table'] = prompt_text('Masukkan Nama Tabel Database', default: 'mst_example', required: true, command: $this);
         }
 
         $this->validateTableExists();
@@ -223,7 +226,7 @@ class MakeMSJModule extends Command
 
         $columns = $this->generator->getTableColumns($this->moduleData['table']);
 
-        if (! empty($columns) && confirm('Deteksi field secara otomatis dari database?', default: true)) {
+        if (! empty($columns) && prompt_confirm('Deteksi field secara otomatis dari database?', default: true, command: $this)) {
             $this->moduleData['fields'] = $this->generator->mapColumnsToFields($columns);
             $this->displaySuccess('Diaturkan secara otomatis '.count($this->moduleData['fields']).' field');
         } else {
@@ -254,35 +257,38 @@ class MakeMSJModule extends Command
             if (! empty($existingFields) && count($existingFields) <= 20) {
                 // Jika field sedikit, gunakan select
                 $fieldOptions = array_combine($existingFields, $existingFields);
-                $fieldName = select(
+                $fieldName = prompt_select(
                     label: 'Field name',
                     options: $fieldOptions,
-                    scroll: 15
+                    scroll: 15,
+                    command: $this
                 );
             } elseif (! empty($existingFields)) {
                 // Jika banyak field, gunakan search
-                $selectedField = search(
+                $selectedField = prompt_search(
                     label: 'Field name',
                     options: fn ($value) => ! empty($value)
                         ? array_values(array_filter($existingFields, fn ($field) => stripos($field, $value) !== false))
                         : array_slice($existingFields, 0, 15),
-                    placeholder: 'Ketik untuk mencari...'
+                    placeholder: 'Ketik untuk mencari...',
+                    command: $this
                 );
 
                 $fieldName = is_string($selectedField) && in_array($selectedField, $existingFields)
                     ? $selectedField
-                    : text('Field name', required: true);
+                    : prompt_text('Field name', required: true, command: $this);
             } else {
-                $fieldName = text('Field name', required: true);
+                $fieldName = prompt_text('Field name', required: true, command: $this);
             }
 
-            $fieldAlias = text(
+            $fieldAlias = prompt_text(
                 label: 'Field label',
                 default: ucwords(str_replace('_', ' ', $fieldName)),
-                placeholder: ucwords(str_replace('_', ' ', $fieldName))
+                required: false,
+                command: $this
             );
 
-            $fieldType = select(
+            $fieldType = prompt_select(
                 label: 'Field type',
                 options: [
                     'string' => 'String',
@@ -293,7 +299,8 @@ class MakeMSJModule extends Command
                     'boolean' => 'Boolean',
                 ],
                 default: 'string',
-                scroll: 10
+                scroll: 10,
+                command: $this
             );
 
             $validationRules = [
@@ -305,11 +312,12 @@ class MakeMSJModule extends Command
                 'nullable|string' => 'Nullable String',
             ];
 
-            $validate = select(
+            $validate = prompt_select(
                 label: 'Aturan Validation',
                 options: $validationRules,
                 default: 'nullable',
-                scroll: 10
+                scroll: 10,
+                command: $this
             );
 
             $fields[] = [
@@ -319,7 +327,7 @@ class MakeMSJModule extends Command
                 'validate' => $validate,
                 'urut' => count($fields) + 1,
             ];
-        } while (confirm('Tambahkan field lainnya?', default: true));
+        } while (prompt_confirm('Tambahkan field lainnya?', default: true, command: $this));
 
         return $fields;
     }
@@ -342,7 +350,7 @@ class MakeMSJModule extends Command
             ]
         );
 
-        if (confirm('Tampilkan detail field?', default: false)) {
+        if (prompt_confirm('Tampilkan detail field?', default: false, command: $this)) {
             $this->displayFieldsTable();
         }
 
@@ -370,7 +378,7 @@ class MakeMSJModule extends Command
     {
         $this->newLine();
 
-        if (! confirm('Generate modul dengan pengaturan di atas?', default: true)) {
+        if (! prompt_confirm('Generate modul dengan pengaturan di atas?', default: true, command: $this)) {
             $this->displayWarning('Generate dibatalkan');
 
             return false;
@@ -429,7 +437,7 @@ class MakeMSJModule extends Command
         $this->line('  <fg=bright-cyan>└─</>');
         $this->newLine();
 
-        if (! confirm('Files/data sudah ada. Lanjutkan? (akan diperbarui/ditimpa)', default: true)) {
+        if (! prompt_confirm('Files/data sudah ada. Lanjutkan? (akan diperbarui/ditimpa)', default: true, command: $this)) {
             $this->displayWarning('Generate dibatalkan oleh pengguna');
 
             return false;
@@ -508,7 +516,7 @@ class MakeMSJModule extends Command
         $this->line('  <fg=bright-cyan>┌─ <fg=white>💾 Auto Save to Seeder</>');
         $this->line('  <fg=bright-cyan>│</>');
         
-        if (confirm('Simpan konfigurasi menu ke seeder?', default: true)) {
+        if (prompt_confirm('Simpan konfigurasi menu ke seeder?', default: true, command: $this)) {
             $this->line('  <fg=bright-cyan>│</> <fg=yellow>⚡</> Menyimpan menu dan table config...');
             
             try {
@@ -548,23 +556,41 @@ class MakeMSJModule extends Command
     protected function displayStep(string $step, string $title): void
     {
         $this->newLine();
-        $this->line("  <fg=bright-cyan>┌─ <fg=white>{$step}: {$title}</>");
-        $this->line('  <fg=bright-cyan>│</>');
+        
+        if ($this->isWindowsNative()) {
+            $this->line("  {$step}: {$title}");
+            $this->line('  ');
+        } else {
+            $this->line("  <fg=bright-cyan>┌─ <fg=white>{$step}: {$title}</>");
+            $this->line('  <fg=bright-cyan>│</>');
+        }
     }
 
     protected function displaySuccess(string $message): void
     {
-        $this->line("  <fg=bright-cyan>│</> <fg=green>✓</> {$message}");
+        if ($this->isWindowsNative()) {
+            $this->line("  [OK] {$message}");
+        } else {
+            $this->line("  <fg=bright-cyan>│</> <fg=green>✓</> {$message}");
+        }
     }
 
     protected function displayWarning(string $message): void
     {
-        $this->line("  <fg=bright-cyan>│</> <fg=yellow>⚠</> {$message}");
+        if ($this->isWindowsNative()) {
+            $this->line("  [WARNING] {$message}");
+        } else {
+            $this->line("  <fg=bright-cyan>│</> <fg=yellow>⚠</> {$message}");
+        }
     }
 
     protected function displayError(string $message): void
     {
-        $this->line("  <fg=red>✗</> {$message}");
+        if ($this->isWindowsNative()) {
+            $this->line("  [ERROR] {$message}");
+        } else {
+            $this->line("  <fg=red>✗</> {$message}");
+        }
     }
 
     protected function createNewGmenuViaCommand(): string

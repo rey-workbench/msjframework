@@ -8,8 +8,7 @@ use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasValidation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
 
 class MakeMSJDmenu extends Command
 {
@@ -22,29 +21,39 @@ class MakeMSJDmenu extends Command
     {
         $this->displayHeader('Create Detail Menu');
 
-        $dmenuCode = $this->argument('code') ?: text(
+        $dmenuCode = $this->argument('code') ?: prompt_text(
             label: 'Kode Detail Menu (dmenu)',
-            placeholder: 'mygmenu',
+            default: 'mygmenu',
             required: true,
-            validate: function($value) {
-                $validation = $this->validateDmenuCode($value, 6);
-                if ($validation) return $validation;
-                
-                // Check duplicate
-                if ($this->dmenuExists($value) || $this->dmenuExists(strtoupper($value)) || $this->dmenuExists(strtolower($value))) {
-                    return "Kode dmenu '{$value}' sudah ada";
-                }
-                
-                return null;
-            }
+            command: $this
         );
+        
+        // Validate dmenu code
+        $validation = $this->validateDmenuCode($dmenuCode, 6);
+        if ($validation) {
+            $this->badge('error', $validation);
+            return Command::FAILURE;
+        }
+        
+        // Check duplicate
+        if ($this->dmenuExists($dmenuCode) || $this->dmenuExists(strtoupper($dmenuCode)) || $this->dmenuExists(strtolower($dmenuCode))) {
+            $this->badge('error', "Kode dmenu '{$dmenuCode}' sudah ada");
+            return Command::FAILURE;
+        }
 
-        $dmenuName = $this->argument('name') ?: text(
+        $dmenuName = $this->argument('name') ?: prompt_text(
             label: 'Nama Detail Menu',
-            placeholder: 'Data Example',
+            default: 'Data Example',
             required: true,
-            validate: fn($value) => $this->validateName($value, 2, 25) // Max 25 chars
+            command: $this
         );
+        
+        // Validate name
+        $validation = $this->validateName($dmenuName, 2, 25);
+        if ($validation) {
+            $this->badge('error', $validation);
+            return Command::FAILURE;
+        }
 
         // Pilih gmenu
         $gmenuCode = $this->option('gmenu');
@@ -52,11 +61,12 @@ class MakeMSJDmenu extends Command
             $gmenuList = $this->getActiveGmenus();
 
             if (!empty($gmenuList)) {
-                $gmenuCode = select(
+                $gmenuCode = prompt_select(
                     label: 'Pilih Group Menu (gmenu)',
                     options: $gmenuList,
                     default: array_key_first($gmenuList),
-                    scroll: 10
+                    scroll: 10,
+                    command: $this
                 );
             } else {
                 $this->badge('error', 'Tidak ada Group Menu yang tersedia. Buat gmenu terlebih dahulu.');
@@ -67,11 +77,18 @@ class MakeMSJDmenu extends Command
         // Auto-generate URL berdasarkan dmenu code
         $dmenuUrl = strtolower($dmenuCode);
 
-        $dmenuUrut = (int) ($this->option('urut') ?: text(
+        $dmenuUrut = (int) ($this->option('urut') ?: prompt_text(
             label: 'Urutan',
             default: '999',
-            validate: fn($value) => $this->validateNumeric($value)
+            required: false,
+            command: $this
         ));
+        
+        // Validate numeric
+        if (!is_numeric($dmenuUrut)) {
+            $this->badge('error', 'Urutan harus berupa angka');
+            return Command::FAILURE;
+        }
 
         // Insert ke database dengan semua field yang diperlukan
         DB::table('sys_dmenu')->insert([

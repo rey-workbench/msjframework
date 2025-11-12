@@ -7,7 +7,7 @@ use MSJFramework\LaravelGenerator\Services\MSJModuleGenerator;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-use function Laravel\Prompts\select;
+// Import safe prompt helpers that work on all platforms
 
 class MakeMSJModel extends Command
 {
@@ -27,11 +27,12 @@ class MakeMSJModel extends Command
             $tables = $this->getAvailableTables();
             if (! empty($tables)) {
                 $tableOptions = array_combine($tables, $tables);
-                $table = select(
+                $table = prompt_select(
                     label: 'Pilih Nama Tabel Database',
                     options: $tableOptions,
                     default: in_array('mst_example', $tables) ? 'mst_example' : ($tables[0] ?? 'mst_example'),
-                    scroll: 15
+                    scroll: 15,
+                    command: $this
                 );
             } else {
                 $this->badge('error', 'Tidak ada tabel yang ditemukan di database!');

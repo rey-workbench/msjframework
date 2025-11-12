@@ -1,6 +1,6 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Console;
+namespace MSJFramework\LaravelGenerator\Support;
 
 use Illuminate\Contracts\Foundation\Application;
 use Laravel\Prompts\ConfirmPrompt;
@@ -11,7 +11,7 @@ use Laravel\Prompts\TextPrompt;
 use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Question\Question;
 
-class WindowsFallbackConfigurator
+class WindowsPromptFallback
 {
     public function __construct(
         private Application $app

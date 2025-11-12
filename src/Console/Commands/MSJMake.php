@@ -7,9 +7,7 @@ use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasDatabaseOperation
 use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasMenuOperations;
 use Illuminate\Console\Command;
 
-use function Laravel\Prompts\search;
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
 
 class MSJMake extends Command
 {
@@ -42,7 +40,7 @@ class MSJMake extends Command
         // Jika tidak ada type, tampilkan interactive menu
         $this->displayWelcomeMenu();
 
-        $action = select(
+        $action = prompt_select(
             label: 'Apa yang ingin Anda lakukan?',
             options: [
                 'menu' => 'Generate Menu Baru',
@@ -56,7 +54,8 @@ class MSJMake extends Command
                 'exit' => 'Keluar',
             ],
             default: 'menu',
-            scroll: 10
+            scroll: 10,
+            command: $this
         );
 
         if ($action === 'exit') {
@@ -93,7 +92,7 @@ class MSJMake extends Command
 
     protected function makeControllerInteractive(): int
     {
-        $name = text('Masukkan Nama Controller', placeholder: 'ExampleController', required: true);
+        $name = prompt_text('Masukkan Nama Controller', default: 'ExampleController', required: true, command: $this);
 
         return $this->call('msj:make:controller', ['name' => $name]);
     }

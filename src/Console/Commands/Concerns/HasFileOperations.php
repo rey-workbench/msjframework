@@ -3,7 +3,7 @@
 namespace MSJFramework\LaravelGenerator\Console\Commands\Concerns;
 
 use Illuminate\Support\Facades\File;
-use function Laravel\Prompts\confirm;
+// Import safe prompt helpers that work on all platforms
 
 trait HasFileOperations
 {
@@ -17,7 +17,7 @@ trait HasFileOperations
                 $this->warn("File {$filename} sudah ada, akan ditimpa...");
                 return true;
             } else {
-                return confirm("File {$filename} sudah ada. Timpa?");
+                return prompt_confirm("File {$filename} sudah ada. Timpa?", command: $this);
             }
         }
         return true;

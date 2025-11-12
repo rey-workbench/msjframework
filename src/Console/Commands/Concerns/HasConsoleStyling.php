@@ -2,7 +2,7 @@
 
 namespace MSJFramework\LaravelGenerator\Console\Commands\Concerns;
 
-use MSJFramework\LaravelGenerator\Console\Helpers\PromptHelper;
+use MSJFramework\LaravelGenerator\Support\CrossPlatformPrompt;
 
 trait HasConsoleStyling
 {
@@ -11,7 +11,7 @@ trait HasConsoleStyling
      */
     protected function isWindowsNative(): bool
     {
-        return PromptHelper::isWindowsNative();
+        return CrossPlatformPrompt::isWindowsNative();
     }
 
     /**
@@ -19,7 +19,7 @@ trait HasConsoleStyling
      */
     protected function stripStyleTags(string $text): string
     {
-        return PromptHelper::stripStyleTags($text);
+        return CrossPlatformPrompt::stripStyleTags($text);
     }
 
     protected function badge(string $type, string $message): void
@@ -98,5 +98,18 @@ trait HasConsoleStyling
             // Linux/macOS/WSL: styled section
             $this->components->task($title);
         }
+    }
+
+    /**
+     * Output a line, automatically stripping style tags on Windows.
+     */
+    protected function line($string, $style = null, $verbosity = null): void
+    {
+        if ($this->isWindowsNative()) {
+            // Strip all style tags for Windows
+            $string = $this->stripStyleTags($string);
+        }
+        
+        parent::line($string, $style, $verbosity);
     }
 }

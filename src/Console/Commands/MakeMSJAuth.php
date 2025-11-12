@@ -8,11 +8,7 @@ use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasValidation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\multiselect;
-use function Laravel\Prompts\password;
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
+// Import safe prompt helpers that work on all platforms
 
 class MakeMSJAuth extends Command
 {
@@ -28,14 +24,15 @@ class MakeMSJAuth extends Command
         $type = $this->argument('type');
 
         if (!$type) {
-            $type = select(
+            $type = prompt_select(
                 'Pilih tipe data yang ingin dibuat:',
                 [
                     'role' => 'Role (sys_roles)',
                     'auth' => 'Authorization (sys_auth)', 
                     'user' => 'User (users)',
                     'all' => 'Semua (role, auth, user)'
-                ]
+                ],
+                command: $this
             );
         }
 
@@ -64,33 +61,53 @@ class MakeMSJAuth extends Command
     {
         $this->displayHeader('Create Role');
 
-        $idroles = text(
+        $idroles = prompt_text(
             label: 'ID Role (max 6 karakter):',
-            placeholder: 'admin1',
-            validate: function(string $value) {
-                $validation = $this->validateRoleId($value, 6);
-                if ($validation) return $validation;
-                
-                // Check duplicate
-                if ($this->roleExists($value)) {
-                    return "ID Role '{$value}' sudah ada";
-                }
-                
-                return null;
-            }
+            default: 'admin1',
+            required: true,
+            command: $this
         );
+        
+        // Validate role ID
+        $validation = $this->validateRoleId($idroles, 6);
+        if ($validation) {
+            $this->badge('error', $validation);
+            return;
+        }
+        
+        // Check duplicate
+        if ($this->roleExists($idroles)) {
+            $this->badge('error', "ID Role '{$idroles}' sudah ada");
+            return;
+        }
 
-        $name = text(
+        $name = prompt_text(
             label: 'Nama Role (max 20 karakter):',
-            placeholder: 'Administrator',
-            validate: fn(string $value) => $this->validateRoleName($value, 20)
+            default: 'Administrator',
+            required: true,
+            command: $this
         );
+        
+        // Validate role name
+        $validation = $this->validateRoleName($name, 20);
+        if ($validation) {
+            $this->badge('error', $validation);
+            return;
+        }
 
-        $description = text(
+        $description = prompt_text(
             label: 'Deskripsi (max 100 karakter):',
-            placeholder: 'Role untuk administrator sistem',
-            validate: fn(string $value) => $this->validateRoleDescription($value, 100)
+            default: 'Role untuk administrator sistem',
+            required: false,
+            command: $this
         );
+        
+        // Validate description
+        $validation = $this->validateRoleDescription($description, 100);
+        if ($validation) {
+            $this->badge('error', $validation);
+            return;
+        }
 
         try {
             DB::table('sys_roles')->insert([
@@ -120,9 +137,10 @@ class MakeMSJAuth extends Command
             return;
         }
 
-        $idroles = select(
+        $idroles = prompt_select(
             'Pilih Role:',
-            $roles
+            $roles,
+            command: $this
         );
 
         // Get available group menus
@@ -132,9 +150,10 @@ class MakeMSJAuth extends Command
             return;
         }
 
-        $gmenu = select(
+        $gmenu = prompt_select(
             'Pilih Group Menu:',
-            $gmenus
+            $gmenus,
+            command: $this
         );
 
         // Get available detail menus for selected group
@@ -149,9 +168,10 @@ class MakeMSJAuth extends Command
             return;
         }
 
-        $dmenu = select(
+        $dmenu = prompt_select(
             'Pilih Detail Menu:',
-            $dmenus
+            $dmenus,
+            command: $this
         );
 
         // Check if auth already exists
@@ -167,7 +187,7 @@ class MakeMSJAuth extends Command
         }
 
         // Pilih template permission atau custom
-        $template = select(
+        $template = prompt_select(
             'Pilih template permission:',
             [
                 'full' => 'Full Access (semua permission)',
@@ -175,7 +195,8 @@ class MakeMSJAuth extends Command
                 'editor' => 'Editor (add, edit, view, print, excel, pdf)',
                 'custom' => 'Custom (pilih manual)'
             ],
-            default: 'full'
+            default: 'full',
+            command: $this
         );
 
         $permissions = match($template) {
@@ -192,15 +213,15 @@ class MakeMSJAuth extends Command
                 'value' => 1, 'print' => 1, 'excel' => 1, 'pdf' => 1, 'rules' => 0
             ],
             'custom' => [
-                'add' => (int) select('Add/Create:', ['0' => 'Tidak', '1' => 'Ya']),
-                'edit' => (int) select('Edit/Update:', ['0' => 'Tidak', '1' => 'Ya']),
-                'delete' => (int) select('Delete:', ['0' => 'Tidak', '1' => 'Ya']),
-                'approval' => (int) select('Approval:', ['0' => 'Tidak', '1' => 'Ya']),
-                'value' => (int) select('View/Value:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
-                'print' => (int) select('Print:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
-                'excel' => (int) select('Excel:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
-                'pdf' => (int) select('PDF:', ['0' => 'Tidak', '1' => 'Ya'], default: '1'),
-                'rules' => (int) select('Rules:', ['0' => 'Tidak', '1' => 'Ya']),
+                'add' => (int) prompt_select('Add/Create:', ['0' => 'Tidak', '1' => 'Ya'], command: $this),
+                'edit' => (int) prompt_select('Edit/Update:', ['0' => 'Tidak', '1' => 'Ya'], command: $this),
+                'delete' => (int) prompt_select('Delete:', ['0' => 'Tidak', '1' => 'Ya'], command: $this),
+                'approval' => (int) prompt_select('Approval:', ['0' => 'Tidak', '1' => 'Ya'], command: $this),
+                'value' => (int) prompt_select('View/Value:', ['0' => 'Tidak', '1' => 'Ya'], default: '1', command: $this),
+                'print' => (int) prompt_select('Print:', ['0' => 'Tidak', '1' => 'Ya'], default: '1', command: $this),
+                'excel' => (int) prompt_select('Excel:', ['0' => 'Tidak', '1' => 'Ya'], default: '1', command: $this),
+                'pdf' => (int) prompt_select('PDF:', ['0' => 'Tidak', '1' => 'Ya'], default: '1', command: $this),
+                'rules' => (int) prompt_select('Rules:', ['0' => 'Tidak', '1' => 'Ya'], command: $this),
             ]
         };
 
@@ -241,42 +262,70 @@ class MakeMSJAuth extends Command
     {
         $this->displayHeader('Create User');
 
-        $name = text(
+        $name = prompt_text(
             label: 'Nama Depan:',
-            placeholder: 'John',
-            validate: fn (string $value) => match (true) {
-                strlen($value) < 2 => 'Nama minimal 2 karakter',
-                strlen($value) > 255 => 'Nama maksimal 255 karakter',
-                default => null
-            }
+            default: 'John',
+            required: true,
+            command: $this
         );
+        
+        // Validate name
+        if (strlen($name) < 2) {
+            $this->badge('error', 'Nama minimal 2 karakter');
+            return;
+        }
+        if (strlen($name) > 255) {
+            $this->badge('error', 'Nama maksimal 255 karakter');
+            return;
+        }
 
-        $username = text(
+        $username = prompt_text(
             label: 'Username:',
-            placeholder: 'johndoe',
-            validate: fn (string $value) => match (true) {
-                strlen($value) < 3 => 'Username minimal 3 karakter',
-                strlen($value) > 20 => 'Username maksimal 20 karakter',
-                !preg_match('/^[a-zA-Z0-9_]+$/', $value) => 'Username hanya boleh huruf, angka, dan underscore',
-                DB::table('users')->where('username', $value)->exists() => 'Username sudah ada',
-                default => null
-            }
+            default: 'johndoe',
+            required: true,
+            command: $this
         );
+        
+        // Validate username
+        if (strlen($username) < 3) {
+            $this->badge('error', 'Username minimal 3 karakter');
+            return;
+        }
+        if (strlen($username) > 20) {
+            $this->badge('error', 'Username maksimal 20 karakter');
+            return;
+        }
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+            $this->badge('error', 'Username hanya boleh huruf, angka, dan underscore');
+            return;
+        }
+        if (DB::table('users')->where('username', $username)->exists()) {
+            $this->badge('error', 'Username sudah ada');
+            return;
+        }
 
-        $email = text(
+        $email = prompt_text(
             label: 'Email:',
-            placeholder: 'john@example.com',
-            validate: fn (string $value) => match (true) {
-                !filter_var($value, FILTER_VALIDATE_EMAIL) => 'Format email tidak valid',
-                DB::table('users')->where('email', $value)->exists() => 'Email sudah ada',
-                default => null
-            }
+            default: 'john@example.com',
+            required: true,
+            command: $this
         );
+        
+        // Validate email
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->badge('error', 'Format email tidak valid');
+            return;
+        }
+        if (DB::table('users')->where('email', $email)->exists()) {
+            $this->badge('error', 'Email sudah ada');
+            return;
+        }
 
-        $password = password(
+        $password = prompt_password(
             label: 'Password:',
             placeholder: 'Minimal 8 karakter',
-            validate: fn (string $value) => strlen($value) < 8 ? 'Password minimal 8 karakter' : null
+            validate: fn (string $value) => strlen($value) < 8 ? 'Password minimal 8 karakter' : null,
+            command: $this
         );
 
         // Get available roles
@@ -286,9 +335,10 @@ class MakeMSJAuth extends Command
             return;
         }
 
-        $selectedRoles = multiselect(
+        $selectedRoles = prompt_multiselect(
             'Pilih Role (bisa multiple):',
-            $roles
+            $roles,
+            command: $this
         );
 
         try {
@@ -320,7 +370,7 @@ class MakeMSJAuth extends Command
     {
         $this->displayHeader('Create All');
 
-        if (confirm('Apakah Anda ingin membuat data auth lengkap?')) {
+        if (prompt_confirm('Apakah Anda ingin membuat data auth lengkap?', command: $this)) {
             $this->badge('info', '1. Membuat Role...');
             $this->createRole();
 
