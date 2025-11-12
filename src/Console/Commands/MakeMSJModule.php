@@ -101,12 +101,20 @@ class MakeMSJModule extends Command
             );
             
             if ($selectedGmenu === '__create_new__') {
-                $this->moduleData['gmenu'] = $this->createNewGmenuViaCommand();
+                $gmenu = $this->createNewGmenuViaCommand();
+                if ($gmenu === null) {
+                    return Command::FAILURE;
+                }
+                $this->moduleData['gmenu'] = $gmenu;
             } else {
                 $this->moduleData['gmenu'] = $selectedGmenu;
             }
         } else {
-            $this->moduleData['gmenu'] = $this->createNewGmenuViaCommand();
+            $gmenu = $this->createNewGmenuViaCommand();
+            if ($gmenu === null) {
+                return Command::FAILURE;
+            }
+            $this->moduleData['gmenu'] = $gmenu;
         }
 
         // DMenu dengan search untuk autocomplete
@@ -130,12 +138,20 @@ class MakeMSJModule extends Command
             );
             
             if ($selectedDmenu === '__create_new__') {
-                $this->moduleData['dmenu'] = $this->createNewDmenuViaCommand();
+                $dmenu = $this->createNewDmenuViaCommand();
+                if ($dmenu === null) {
+                    return Command::FAILURE;
+                }
+                $this->moduleData['dmenu'] = $dmenu;
             } else {
                 $this->moduleData['dmenu'] = $selectedDmenu ?: 'KOP999';
             }
         } else {
-            $this->moduleData['dmenu'] = $this->createNewDmenuViaCommand();
+            $dmenu = $this->createNewDmenuViaCommand();
+            if ($dmenu === null) {
+                return Command::FAILURE;
+            }
+            $this->moduleData['dmenu'] = $dmenu;
         }
 
         // Menu Name
@@ -593,7 +609,7 @@ class MakeMSJModule extends Command
         }
     }
 
-    protected function createNewGmenuViaCommand(): string
+    protected function createNewGmenuViaCommand(): ?string
     {
         $this->newLine();
         $this->line('  <fg=bright-cyan>│</> <fg=yellow>📝</> Membuat Group Menu Baru via Command');
@@ -602,7 +618,7 @@ class MakeMSJModule extends Command
         
         if ($exitCode !== 0) {
             $this->line('  <fg=bright-cyan>│</> <fg=red>✗</> Gagal membuat Group Menu');
-            return 'KOP001'; // fallback
+            return null; // Return null to signal failure
         }
         
         // Get the latest created gmenu
@@ -611,10 +627,10 @@ class MakeMSJModule extends Command
             ->orderBy('created_at', 'desc')
             ->first();
             
-        return $latestGmenu ? $latestGmenu->gmenu : 'KOP001';
+        return $latestGmenu ? $latestGmenu->gmenu : null;
     }
 
-    protected function createNewDmenuViaCommand(): string
+    protected function createNewDmenuViaCommand(): ?string
     {
         $this->newLine();
         $this->line('  <fg=bright-cyan>│</> <fg=yellow>📝</> Membuat Detail Menu Baru via Command');
@@ -625,7 +641,7 @@ class MakeMSJModule extends Command
         
         if ($exitCode !== 0) {
             $this->line('  <fg=bright-cyan>│</> <fg=red>✗</> Gagal membuat Detail Menu');
-            return 'KOP999'; // fallback
+            return null; // Return null to signal failure
         }
         
         // Get the latest created dmenu
@@ -635,7 +651,7 @@ class MakeMSJModule extends Command
             ->orderBy('created_at', 'desc')
             ->first();
             
-        return $latestDmenu ? $latestDmenu->dmenu : 'KOP999';
+        return $latestDmenu ? $latestDmenu->dmenu : null;
     }
 
     protected function generateSeederPrefix(): string

@@ -29,6 +29,9 @@ class MakeMSJController extends Command
 
         // GMenu dengan select
         $gmenu = $this->option('gmenu') ?? $this->selectOrCreateGmenu('KOP001');
+        if ($gmenu === null) {
+            return Command::FAILURE;
+        }
 
         $url = $this->option('url') ?? prompt_text('Masukkan Slug URL', required: true, command: $this);
 

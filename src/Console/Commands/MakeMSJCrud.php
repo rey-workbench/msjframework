@@ -68,11 +68,17 @@ class MakeMSJCrud extends Command
             
             if ($selectedGmenu === '__create_new__') {
                 $gmenu = $this->createNewGmenuViaCommand();
+                if ($gmenu === null) {
+                    return Command::FAILURE;
+                }
             } else {
                 $gmenu = $selectedGmenu;
             }
         } else {
             $gmenu = $this->option('gmenu') ?? $this->createNewGmenuViaCommand();
+            if ($gmenu === null) {
+                return Command::FAILURE;
+            }
         }
         
         // Store gmenu untuk digunakan di createNewDmenu
@@ -101,11 +107,17 @@ class MakeMSJCrud extends Command
                 
                 if ($selectedDmenu === '__create_new__') {
                     $dmenu = $this->createNewDmenuViaCommand();
+                    if ($dmenu === null) {
+                        return Command::FAILURE;
+                    }
                 } else {
                     $dmenu = $selectedDmenu;
                 }
             } else {
                 $dmenu = $this->createNewDmenuViaCommand();
+                if ($dmenu === null) {
+                    return Command::FAILURE;
+                }
             }
         } else {
             $dmenu = $this->option('dmenu');
@@ -254,7 +266,7 @@ class MakeMSJCrud extends Command
         }
     }
 
-    protected function createNewGmenuViaCommand(): string
+    protected function createNewGmenuViaCommand(): ?string
     {
         $this->newLine();
         $this->section('📝 Membuat Group Menu Baru via Command');
@@ -263,7 +275,7 @@ class MakeMSJCrud extends Command
         
         if ($exitCode !== 0) {
             $this->badge('error', 'Gagal membuat Group Menu');
-            return 'KOP001'; // fallback
+            return null; // Return null to signal failure
         }
         
         // Get the latest created gmenu
@@ -272,10 +284,10 @@ class MakeMSJCrud extends Command
             ->orderBy('created_at', 'desc')
             ->first();
             
-        return $latestGmenu ? $latestGmenu->gmenu : 'KOP001';
+        return $latestGmenu ? $latestGmenu->gmenu : null;
     }
 
-    protected function createNewDmenuViaCommand(): string
+    protected function createNewDmenuViaCommand(): ?string
     {
         $this->newLine();
         $this->section('📝 Membuat Detail Menu Baru via Command');
@@ -286,7 +298,7 @@ class MakeMSJCrud extends Command
         
         if ($exitCode !== 0) {
             $this->badge('error', 'Gagal membuat Detail Menu');
-            return 'KOP999'; // fallback
+            return null; // Return null to signal failure
         }
         
         // Get the latest created dmenu
@@ -296,7 +308,7 @@ class MakeMSJCrud extends Command
             ->orderBy('created_at', 'desc')
             ->first();
             
-        return $latestDmenu ? $latestDmenu->dmenu : 'KOP999';
+        return $latestDmenu ? $latestDmenu->dmenu : null;
     }
 
     protected function generateSeederPrefix(): string

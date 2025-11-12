@@ -12,7 +12,7 @@ trait HasMenuOperations
     /**
      * Select or create gmenu interactively
      */
-    protected function selectOrCreateGmenu(?string $defaultGmenu = null): string
+    protected function selectOrCreateGmenu(?string $defaultGmenu = null): ?string
     {
         $gmenus = $this->getActiveGmenus();
 
@@ -45,7 +45,7 @@ trait HasMenuOperations
     /**
      * Select or create dmenu interactively
      */
-    protected function selectOrCreateDmenu(string $gmenu, ?string $defaultDmenu = null): string
+    protected function selectOrCreateDmenu(string $gmenu, ?string $defaultDmenu = null): ?string
     {
         $dmenus = $this->getActiveDmenus($gmenu);
 
@@ -112,7 +112,7 @@ trait HasMenuOperations
     /**
      * Create gmenu via command
      */
-    protected function createGmenuViaCommand(): string
+    protected function createGmenuViaCommand(): ?string
     {
         $this->newLine();
         $this->info('📝 Membuat Group Menu Baru...');
@@ -121,17 +121,17 @@ trait HasMenuOperations
 
         if ($exitCode !== 0) {
             $this->error('Gagal membuat Group Menu');
-            return 'KOP001'; // fallback
+            return null; // Return null to signal failure
         }
 
         $latestGmenu = $this->getLatestGmenu();
-        return $latestGmenu ? $latestGmenu->gmenu : 'KOP001';
+        return $latestGmenu ? $latestGmenu->gmenu : null;
     }
 
     /**
      * Create dmenu via command
      */
-    protected function createDmenuViaCommand(string $gmenu): string
+    protected function createDmenuViaCommand(string $gmenu): ?string
     {
         $this->newLine();
         $this->info('📝 Membuat Detail Menu Baru...');
@@ -140,11 +140,11 @@ trait HasMenuOperations
 
         if ($exitCode !== 0) {
             $this->error('Gagal membuat Detail Menu');
-            return 'KOP999'; // fallback
+            return null; // Return null to signal failure
         }
 
         $latestDmenu = $this->getLatestDmenu($gmenu);
-        return $latestDmenu ? $latestDmenu->dmenu : 'KOP999';
+        return $latestDmenu ? $latestDmenu->dmenu : null;
     }
 
     /**
