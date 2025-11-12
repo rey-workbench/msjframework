@@ -71,7 +71,7 @@ class AddView
                                         <div class="form-group">
                                             @if ($header->type != 'hidden' && $header->field != 'isactive')
                                                 <label class="form-control-label"
-                                                    {{ $primary ? ($generateid ? ' style=display:none;' : '') : '' }}>
+                                                    {{ $primary ? ($generateid ? ' style="display:none;"' : '') : '' }}>
                                                     {{ $header->alias }}
                                                     @if ($header->validate && str_contains($header->validate, 'required'))
                                                         <span class="text-danger">*</span>
