@@ -102,8 +102,9 @@ trait HasConsoleStyling
 
     /**
      * Output a line, automatically stripping style tags on Windows.
+     * Override parent method with public visibility.
      */
-    protected function line($string, $style = null, $verbosity = null): void
+    public function line($string, $style = null, $verbosity = null): void
     {
         if ($this->isWindowsNative()) {
             // Strip all style tags for Windows
