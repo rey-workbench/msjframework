@@ -141,11 +141,19 @@ class CrossPlatformPrompt
             
             $selectedIndex = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
             
-            // Get the actual value by index
+            // Get the actual key by using the display index
             $optionKeys = array_keys($options);
-            $result = $optionKeys[(int)$selectedIndex];
+            $selectedKey = $optionKeys[(int)$selectedIndex];
             
-            return $result;
+            // For search fallback with numeric-indexed arrays, return the value (the actual data)
+            // For associative arrays, return the key (to match Laravel Prompts behavior)
+            if (is_numeric($selectedKey) && $selectedKey >= 0 && $selectedKey < count($options)) {
+                // This is likely from a search fallback - return the value
+                return $options[$selectedKey];
+            }
+            
+            // For normal associative arrays, return the key
+            return $selectedKey;
         }
 
         // Use Laravel Prompts on Linux/macOS/WSL
@@ -277,14 +285,21 @@ class CrossPlatformPrompt
             
             $selectedNumbers = $helper->ask($inputProp->getValue($command), $outputProp->getValue($command), $question);
             
-            // Convert numbers back to keys
+            // Convert numbers back to keys/values
             $result = [];
             if (!empty($selectedNumbers)) {
                 $numbers = array_map('trim', explode(',', $selectedNumbers));
                 $optionKeys = array_keys($options);
                 foreach ($numbers as $num) {
                     $index = (int)$num;
-                    $result[] = $optionKeys[$index];
+                    $selectedKey = $optionKeys[$index];
+                    
+                    // For numeric-indexed arrays, return the value; for associative arrays, return the key
+                    if (is_numeric($selectedKey) && $selectedKey >= 0 && $selectedKey < count($options)) {
+                        $result[] = $options[$selectedKey];
+                    } else {
+                        $result[] = $selectedKey;
+                    }
                 }
             }
             
