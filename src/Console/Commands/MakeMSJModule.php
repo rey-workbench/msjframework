@@ -420,6 +420,17 @@ class MakeMSJModule extends Command
     {
         $this->displayValidationSection();
 
+        // Set layout_type and controller_type based on layout selection
+        $layout = $this->moduleData['layout'] ?? 'manual';
+        
+        if ($layout !== 'manual') {
+            // For auto layouts, set both layout_type and controller_type
+            $this->moduleData['layout_type'] = 'auto';
+            $this->moduleData['controller_type'] = $layout; // standr, master, system, transc, sublnk, report
+        } else {
+            $this->moduleData['layout_type'] = 'manual';
+        }
+
         $this->generator->setConfig($this->moduleData);
         $validation = $this->generator->validateBeforeGenerate();
 
@@ -491,9 +502,13 @@ class MakeMSJModule extends Command
             'Authorization' => $this->generator->registerAuthorization(),
         ];
 
-        if ($this->moduleData['layout'] === 'manual') {
-            $results['Controller'] = $this->generator->generateController();
-            $results['Views'] = $this->generator->generateViews();
+        // Generate controller and views for all layout types
+        $results['Controller'] = $this->generator->generateController();
+        $results['Views'] = $this->generator->generateViews();
+        
+        // Only generate JS for manual layout or layouts that need it
+        $layout = $this->moduleData['layout'] ?? 'manual';
+        if ($layout === 'manual' || in_array($layout, ['standr', 'master', 'system', 'transc', 'sublnk'])) {
             $results['JavaScript'] = $this->generator->generateJavascript();
         }
 

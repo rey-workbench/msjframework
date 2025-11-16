@@ -7,6 +7,7 @@ use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJController;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJCrud;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJDmenu;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJGmenu;
+use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJInit;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJModel;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJModule;
 use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJSave;
@@ -27,6 +28,7 @@ class MSJServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 MSJMake::class,
+                MakeMSJInit::class,
                 MakeMSJModule::class,
                 MakeMSJCrud::class,
                 MakeMSJController::class,

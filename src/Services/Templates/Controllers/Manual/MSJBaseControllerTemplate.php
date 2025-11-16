@@ -1,6 +1,6 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Services\Templates;
+namespace MSJFramework\LaravelGenerator\Services\Templates\Controllers\Manual;
 
 use MSJFramework\LaravelGenerator\Services\Templates\Helpers\ErrorHelperTemplate;
 use MSJFramework\LaravelGenerator\Services\Templates\Helpers\FormatHelperTemplate;

@@ -1,6 +1,6 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Services\Templates;
+namespace MSJFramework\LaravelGenerator\Services\Templates\Views\Manual;
 
 class ListView
 {

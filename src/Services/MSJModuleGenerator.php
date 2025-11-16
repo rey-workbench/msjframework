@@ -2,16 +2,44 @@
 
 namespace MSJFramework\LaravelGenerator\Services;
 
-use MSJFramework\LaravelGenerator\Services\Templates\AddView;
-use MSJFramework\LaravelGenerator\Services\Templates\ControllerTemplate;
-use MSJFramework\LaravelGenerator\Services\Templates\EditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Manual\AddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Manual\ControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Manual\EditView;
 use MSJFramework\LaravelGenerator\Services\Templates\JavascriptTemplate;
 use MSJFramework\LaravelGenerator\Services\Templates\JsComponent;
-use MSJFramework\LaravelGenerator\Services\Templates\ListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Manual\ListView;
 use MSJFramework\LaravelGenerator\Services\Templates\ModelTemplate;
-use MSJFramework\LaravelGenerator\Services\Templates\MSJBaseControllerTemplate;
-use MSJFramework\LaravelGenerator\Services\Templates\ShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Manual\MSJBaseControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Manual\ShowView;
 use MSJFramework\LaravelGenerator\Services\Templates\Helpers\ValidationHelperTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\SystemControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\TranscControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\StandrControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\MasterControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\ReportControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\SublnkControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SystemListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SystemAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SystemEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SystemShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\TranscListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\TranscAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\TranscEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\TranscShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\StandrListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\StandrAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\StandrEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\StandrShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\MasterListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\MasterAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\MasterEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\MasterShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\ReportFilterView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\ReportResultView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SublnkListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SublnkAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SublnkEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SublnkShowView;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -186,7 +214,27 @@ class MSJModuleGenerator
         $exists = File::exists($controllerPath);
 
         // Always regenerate to ensure it's up to date
-        $content = ControllerTemplate::getTemplate($this->config);
+        // Check if layout is auto
+        $layoutType = $this->config['layout_type'] ?? 'manual';
+        
+        if ($layoutType === 'auto') {
+            // Determine controller type from config
+            $controllerType = $this->config['controller_type'] ?? 'standr';
+            
+            $content = match ($controllerType) {
+                'system' => SystemControllerTemplate::getTemplate($this->config),
+                'transc' => TranscControllerTemplate::getTemplate($this->config),
+                'standr' => StandrControllerTemplate::getTemplate($this->config),
+                'master' => MasterControllerTemplate::getTemplate($this->config),
+                'report' => ReportControllerTemplate::getTemplate($this->config),
+                'sublnk' => SublnkControllerTemplate::getTemplate($this->config),
+                default => ControllerTemplate::getTemplate($this->config),
+            };
+        } else {
+            // Manual layout (existing logic)
+            $content = ControllerTemplate::getTemplate($this->config);
+        }
+        
         File::put($controllerPath, $content);
 
         return [
@@ -198,17 +246,32 @@ class MSJModuleGenerator
 
     public function generateViews(): array
     {
-        // Check if gmenu name is "-" (use pages folder instead)
-        $gmenuName = DB::table('sys_gmenu')
-            ->where('gmenu', $this->config['gmenu'])
-            ->value('name');
-
-        // Views folder: if gmenu name is "-", use pages/{url}, otherwise use {gmenu}/{url}
-        $viewBasePath = ($gmenuName === '-') ? 'pages' : $this->config['gmenu'];
-        $viewsDir = resource_path("views/{$viewBasePath}/{$this->config['url']}");
+        // Determine views based on controller type
+        $layoutType = $this->config['layout_type'] ?? 'manual';
+        $controllerType = $this->config['controller_type'] ?? 'standr';
+        
+        // Determine views folder path based on layout type
+        if ($layoutType === 'auto') {
+            // For auto layouts: {layout}/auto/ (e.g., standr/auto/, master/auto/)
+            $viewsDir = resource_path("views/{$controllerType}/auto");
+        } else {
+            // For manual layout: check gmenu name
+            $gmenuName = DB::table('sys_gmenu')
+                ->where('gmenu', $this->config['gmenu'])
+                ->value('name');
+            
+            // Views folder: if gmenu name is "-", use pages/{url}, otherwise use {gmenu}/{url}
+            $viewBasePath = ($gmenuName === '-') ? 'pages' : $this->config['gmenu'];
+            $viewsDir = resource_path("views/{$viewBasePath}/{$this->config['url']}");
+        }
+        
+        if ($layoutType === 'auto' && $controllerType === 'report') {
+            $views = ['filter', 'result'];
+        } else {
+            $views = ['list', 'add', 'edit', 'show'];
+        }
 
         // Check if all view files exist
-        $views = ['list', 'add', 'edit', 'show'];
         $allExist = File::exists($viewsDir);
         $missingFiles = [];
 
@@ -510,6 +573,58 @@ class MSJModuleGenerator
 
     protected function buildViewContent(string $view): string
     {
+        // Check if layout is auto
+        $layoutType = $this->config['layout_type'] ?? 'manual';
+        
+        if ($layoutType === 'auto') {
+            // Determine controller type from config
+            $controllerType = $this->config['controller_type'] ?? 'standr';
+            
+            return match ($controllerType) {
+                'system' => match ($view) {
+                    'list' => SystemListView::getTemplate(),
+                    'add' => SystemAddView::getTemplate(),
+                    'edit' => SystemEditView::getTemplate(),
+                    'show' => SystemShowView::getTemplate(),
+                    default => '',
+                },
+                'transc' => match ($view) {
+                    'list' => TranscListView::getTemplate(),
+                    'add' => TranscAddView::getTemplate(),
+                    'edit' => TranscEditView::getTemplate(),
+                    'show' => TranscShowView::getTemplate(),
+                    default => '',
+                },
+                'standr' => match ($view) {
+                    'list' => StandrListView::getTemplate(),
+                    'add' => StandrAddView::getTemplate(),
+                    'edit' => StandrEditView::getTemplate(),
+                    'show' => StandrShowView::getTemplate(),
+                    default => '',
+                },
+                'master' => match ($view) {
+                    'list' => MasterListView::getTemplate(),
+                    'add' => MasterAddView::getTemplate(),
+                    'edit' => MasterEditView::getTemplate(),
+                    'show' => MasterShowView::getTemplate(),
+                    default => '',
+                },
+                'report' => match ($view) {
+                    'filter' => ReportFilterView::getTemplate(),
+                    'result' => ReportResultView::getTemplate(),
+                    default => '',
+                },
+                'sublnk' => match ($view) {
+                    'list' => SublnkListView::getTemplate(),
+                    'add' => SublnkAddView::getTemplate(),
+                    'edit' => SublnkEditView::getTemplate(),
+                    'show' => SublnkShowView::getTemplate(),
+                    default => '',
+                },
+                default => '',
+            };
+        }
+        
         return match ($view) {
             'list' => ListView::getTemplate($this->config['dmenu']),
             'add' => AddView::getTemplate($this->config['dmenu']),

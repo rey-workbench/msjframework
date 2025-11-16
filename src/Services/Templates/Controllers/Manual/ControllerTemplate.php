@@ -1,6 +1,6 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Services\Templates;
+namespace MSJFramework\LaravelGenerator\Services\Templates\Controllers\Manual;
 
 use Illuminate\Support\Str;
 
