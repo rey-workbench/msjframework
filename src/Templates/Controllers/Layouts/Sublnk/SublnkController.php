@@ -4,7 +4,7 @@ namespace MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Sublnk;
 
 use Illuminate\Support\Str;
 
-class TranscControllerTemplate
+class SublnkController
 {
     public static function getTemplate(array $config): string
     {
@@ -47,8 +47,15 @@ class SublnkController extends Controller
         // function helper
         $data['format'] = new Format_Helper;
         // list data table
-        $data['table_query'] = DB::table('sys_table')->where(['gmenu' => $data['gmenuid'], 'dmenu' => $data['dmenu'], 'field' => 'query'])->first();
-        $data['table_result'] = DB::select($data['table_query']->query);
+        $data['table_query'] = DB::table('sys_table')->where([
+            'gmenu' => $data['gmenuid'],
+            'dmenu' => $data['dmenu'],
+            'field' => 'query',
+        ])->first();
+        // Safeguard when no 'query' row configured in sys_table
+        $data['table_result'] = ($data['table_query'] && $data['table_query']->query)
+            ? DB::select($data['table_query']->query)
+            : [];
         $data['table_header_h'] = DB::table('sys_table')->where(['gmenu' => @$_GET['gmenu'], 'dmenu' => @$_GET['dmenu'], 'list' => '1', 'position' => '1'])->orderBy('urut')->get();
         $data['table_header_d'] = DB::table('sys_table')->where(['gmenu' => @$_GET['gmenu'], 'dmenu' => @$_GET['dmenu'], 'list' => '1', 'position' => '2'])->orderBy('urut')->get();
         // check decrypt

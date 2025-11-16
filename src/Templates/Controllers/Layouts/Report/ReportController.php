@@ -4,7 +4,7 @@ namespace MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Report;
 
 use Illuminate\Support\Str;
 
-class TranscControllerTemplate
+class ReportController
 {
     public static function getTemplate(array $config): string
     {
