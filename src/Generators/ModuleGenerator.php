@@ -1,45 +1,45 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Services;
+namespace MSJFramework\LaravelGenerator\Generators;
 
-use MSJFramework\LaravelGenerator\Templates\Views\Manual\AddView;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Manual\ManualController;
-use MSJFramework\LaravelGenerator\Templates\Views\Manual\EditView;
-use MSJFramework\LaravelGenerator\Templates\Javascript\JsTemplate;
-use MSJFramework\LaravelGenerator\Templates\Javascript\JsComponent;
-use MSJFramework\LaravelGenerator\Templates\Views\Manual\ListView;
-use MSJFramework\LaravelGenerator\Templates\Models\ModelTemplate;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Base\MSJBaseController;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Manual\AddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Manual\ControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Manual\EditView;
+use MSJFramework\LaravelGenerator\Services\Templates\JavascriptTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\JsComponent;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Manual\ListView;
+use MSJFramework\LaravelGenerator\Services\Templates\ModelTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Manual\MSJBaseControllerTemplate;
 use MSJFramework\LaravelGenerator\Services\Templates\Views\Manual\ShowView;
-use MSJFramework\LaravelGenerator\Templates\Helpers\ValidationHelper;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\System\SystemController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Transc\TranscController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Standr\StandrController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Master\MasterController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Report\ReportController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Sublnk\SublnkController;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\System\ListView as SystemListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\System\AddView as SystemAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\System\EditView as SystemEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\System\ShowView as SystemShowView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Transc\ListView as TranscListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Transc\AddView as TranscAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Transc\EditView as TranscEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Transc\ShowView as TranscShowView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Standr\ListView as StandrListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Standr\AddView as StandrAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Standr\EditView as StandrEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Standr\ShowView as StandrShowView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Master\ListView as MasterListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Master\AddView as MasterAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Master\EditView as MasterEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Master\ShowView as MasterShowView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Report\FilterView as ReportFilterView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Report\ResultView as ReportResultView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Sublnk\ListView as SublnkListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Sublnk\AddView as SublnkAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Sublnk\EditView as SublnkEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Sublnk\ShowView as SublnkShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Helpers\ValidationHelperTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\SystemControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\TranscControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\StandrControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\MasterControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\ReportControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Controllers\Auto\SublnkControllerTemplate;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SystemListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SystemAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SystemEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SystemShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\TranscListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\TranscAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\TranscEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\TranscShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\StandrListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\StandrAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\StandrEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\StandrShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\MasterListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\MasterAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\MasterEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\MasterShowView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\ReportFilterView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\ReportResultView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SublnkListView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SublnkAddView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SublnkEditView;
+use MSJFramework\LaravelGenerator\Services\Templates\Views\Auto\SublnkShowView;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -52,7 +52,7 @@ use function base_path;
 use function storage_path;
 use function public_path;
 
-class MSJModuleGenerator
+class ModuleGenerator
 {
     protected array $config;
 
@@ -203,8 +203,8 @@ class MSJModuleGenerator
     public function generateController(): array
     {
         // Ensure MSJBaseController and ValidationHelper exist first
-        MSJBaseController::createIfNotExists();
-        ValidationHelper::createIfNotExists();
+        MSJBaseControllerTemplate::createIfNotExists();
+        ValidationHelperTemplate::createIfNotExists();
 
         // Generate controller name compatible with PageController
         // PageController uses ucfirst() so we need to match that behavior
@@ -222,17 +222,17 @@ class MSJModuleGenerator
             $controllerType = $this->config['controller_type'] ?? 'standr';
             
             $content = match ($controllerType) {
-                'system' => SystemController::getTemplate($this->config),
-                'transc' => TranscController::getTemplate($this->config),
-                'standr' => StandrController::getTemplate($this->config),
-                'master' => MasterController::getTemplate($this->config),
-                'report' => ReportController::getTemplate($this->config),
-                'sublnk' => SublnkController::getTemplate($this->config),
-                default => ManualController::getTemplate($this->config),
+                'system' => SystemControllerTemplate::getTemplate($this->config),
+                'transc' => TranscControllerTemplate::getTemplate($this->config),
+                'standr' => StandrControllerTemplate::getTemplate($this->config),
+                'master' => MasterControllerTemplate::getTemplate($this->config),
+                'report' => ReportControllerTemplate::getTemplate($this->config),
+                'sublnk' => SublnkControllerTemplate::getTemplate($this->config),
+                default => ControllerTemplate::getTemplate($this->config),
             };
         } else {
             // Manual layout (existing logic)
-            $content = ManualController::getTemplate($this->config);
+            $content = ControllerTemplate::getTemplate($this->config);
         }
         
         File::put($controllerPath, $content);
@@ -331,7 +331,7 @@ class MSJModuleGenerator
             return ['status' => 'skipped', 'message' => 'JS file sudah ada', 'path' => $jsFile];
         }
 
-        $content = JsTemplate::getTemplate();
+        $content = JavascriptTemplate::getTemplate();
         File::put($jsFile, $content);
 
         return ['status' => 'success', 'path' => $jsFile];

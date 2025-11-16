@@ -1,6 +1,6 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Console\Commands;
+namespace MSJFramework\LaravelGenerator\Console\Commands\Generate;
 
 use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasConsoleStyling;
 use MSJFramework\LaravelGenerator\Services\MSJModuleGenerator;
