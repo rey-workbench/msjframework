@@ -2,18 +2,18 @@
 
 namespace MSJFramework\LaravelGenerator;
 
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJAuth;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJController;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJCrud;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJDmenu;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJGmenu;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJInit;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJModel;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJModule;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJSave;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJSeeder;
-use MSJFramework\LaravelGenerator\Console\Commands\MakeMSJViews;
+use MSJFramework\LaravelGenerator\Console\Commands\Database\MakeMSJAuth;
+use MSJFramework\LaravelGenerator\Console\Commands\Database\MakeMSJDmenu;
+use MSJFramework\LaravelGenerator\Console\Commands\Database\MakeMSJGmenu;
+use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJController;
+use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJCrud;
+use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJModel;
+use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJModule;
+use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJSeeder;
+use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJViews;
 use MSJFramework\LaravelGenerator\Console\Commands\MSJMake;
+use MSJFramework\LaravelGenerator\Console\Commands\Setup\MakeMSJInit;
+use MSJFramework\LaravelGenerator\Console\Commands\Setup\MakeMSJSave;
 use MSJFramework\LaravelGenerator\Support\WindowsPromptFallback;
 use Illuminate\Support\ServiceProvider;
 use function config_path;
@@ -29,14 +29,14 @@ class MSJServiceProvider extends ServiceProvider
             $this->commands([
                 MSJMake::class,
                 MakeMSJInit::class,
+                MakeMSJSave::class,
                 MakeMSJModule::class,
                 MakeMSJCrud::class,
                 MakeMSJController::class,
                 MakeMSJModel::class,
                 MakeMSJViews::class,
-                MakeMSJAuth::class,
-                MakeMSJSave::class,
                 MakeMSJSeeder::class,
+                MakeMSJAuth::class,
                 MakeMSJGmenu::class,
                 MakeMSJDmenu::class,
             ]);

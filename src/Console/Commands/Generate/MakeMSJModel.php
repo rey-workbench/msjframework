@@ -3,6 +3,7 @@
 namespace MSJFramework\LaravelGenerator\Console\Commands\Generate;
 
 use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasConsoleStyling;
+use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasDatabaseOperations;
 use MSJFramework\LaravelGenerator\Services\MSJModuleGenerator;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class MakeMSJModel extends Command
 {
-    use HasConsoleStyling;
+    use HasConsoleStyling, HasDatabaseOperations;
 
     protected $signature = 'msj:make:model {table?} {--force : Menimpa model yang sudah ada}';
 
@@ -81,18 +82,5 @@ class MakeMSJModel extends Command
         }
 
         return Command::SUCCESS;
-    }
-
-    protected function getAvailableTables(): array
-    {
-        try {
-            $database = DB::connection()->getDatabaseName();
-            $tables = DB::select('SHOW TABLES');
-            $tableKey = "Tables_in_{$database}";
-
-            return array_map(fn ($table) => $table->$tableKey, $tables);
-        } catch (\Exception $e) {
-            return [];
-        }
     }
 }

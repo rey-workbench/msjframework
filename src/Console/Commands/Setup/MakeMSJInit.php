@@ -5,7 +5,7 @@ namespace MSJFramework\LaravelGenerator\Console\Commands\Setup;
 use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasConsoleStyling;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use MSJFramework\LaravelGenerator\Services\Templates\Controllers\PageControllerTemplate;
+use MSJFramework\LaravelGenerator\Templates\Controllers\Base\PageControllerTemplate;
 
 class MakeMSJInit extends Command
 {

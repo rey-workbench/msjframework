@@ -2,69 +2,36 @@
 
 namespace MSJFramework\LaravelGenerator\Services;
 
-use MSJFramework\LaravelGenerator\Templates\Views\Manual\AddView;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Manual\ManualController;
-use MSJFramework\LaravelGenerator\Templates\Views\Manual\EditView;
-use MSJFramework\LaravelGenerator\Templates\Javascript\JsTemplate;
-use MSJFramework\LaravelGenerator\Templates\Javascript\JsComponent;
-use MSJFramework\LaravelGenerator\Templates\Views\Manual\ListView;
-use MSJFramework\LaravelGenerator\Templates\Models\ModelTemplate;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Base\MSJBaseController;
-use MSJFramework\LaravelGenerator\Services\Templates\Views\Manual\ShowView;
-use MSJFramework\LaravelGenerator\Templates\Helpers\ValidationHelper;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\System\SystemController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Transc\TranscController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Standr\StandrController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Master\MasterController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Report\ReportController;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Layouts\Sublnk\SublnkController;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\System\ListView as SystemListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\System\AddView as SystemAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\System\EditView as SystemEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\System\ShowView as SystemShowView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Transc\ListView as TranscListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Transc\AddView as TranscAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Transc\EditView as TranscEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Transc\ShowView as TranscShowView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Standr\ListView as StandrListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Standr\AddView as StandrAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Standr\EditView as StandrEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Standr\ShowView as StandrShowView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Master\ListView as MasterListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Master\AddView as MasterAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Master\EditView as MasterEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Master\ShowView as MasterShowView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Report\FilterView as ReportFilterView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Report\ResultView as ReportResultView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Sublnk\ListView as SublnkListView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Sublnk\AddView as SublnkAddView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Sublnk\EditView as SublnkEditView;
-use MSJFramework\LaravelGenerator\Templates\Views\Layouts\Sublnk\ShowView as SublnkShowView;
+use MSJFramework\LaravelGenerator\Services\Generation\ControllerGeneratorService;
+use MSJFramework\LaravelGenerator\Services\Generation\JavascriptGeneratorService;
+use MSJFramework\LaravelGenerator\Services\Generation\ModelGeneratorService;
+use MSJFramework\LaravelGenerator\Services\Generation\ViewGeneratorService;
+use MSJFramework\LaravelGenerator\Services\Validation\ModuleValidationService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-
-// Import Laravel helper functions
-use function app_path;
-use function resource_path;
-use function config_path;
-use function base_path;
-use function storage_path;
-use function public_path;
 
 class MSJModuleGenerator
 {
     protected array $config;
+    protected ModuleValidationService $validator;
+    protected ModelGeneratorService $modelGenerator;
+    protected ControllerGeneratorService $controllerGenerator;
+    protected ViewGeneratorService $viewGenerator;
+    protected JavascriptGeneratorService $javascriptGenerator;
 
     public function __construct(array $config = [])
     {
         // Normalize URL for PageController compatibility
-        // PageController uses ucfirst() so we need to remove dashes and keep lowercase
         if (isset($config['url']) && str_contains($config['url'], '-')) {
             $config['url'] = str_replace('-', '', $config['url']);
         }
 
         $this->config = $config;
+        $this->validator = new ModuleValidationService();
+        $this->modelGenerator = new ModelGeneratorService();
+        $this->controllerGenerator = new ControllerGeneratorService();
+        $this->viewGenerator = new ViewGeneratorService();
+        $this->javascriptGenerator = new JavascriptGeneratorService();
     }
 
     public function setConfig(array $config): self
@@ -85,271 +52,39 @@ class MSJModuleGenerator
 
     public function validateBeforeGenerate(): array
     {
-        $errors = [];
-        $warnings = [];
-
-        // Validate required config
-        $required = ['table', 'dmenu', 'url', 'gmenu'];
-        foreach ($required as $key) {
-            if (empty($this->config[$key] ?? null)) {
-                $errors[] = "Konfigurasi '{$key}' harus diisi";
-
-                return [
-                    'valid' => false,
-                    'errors' => $errors,
-                    'warnings' => $warnings,
-                ];
-            }
-        }
-
-        // Check if table exists
-        if (! $this->checkTableExists($this->config['table'])) {
-            $errors[] = "Tabel '{$this->config['table']}' tidak ditemukan di database";
-        }
-
-        // Check if dmenu already registered
-        if ($this->checkMenuExists($this->config['dmenu'])) {
-            $warnings[] = "Menu dengan dmenu '{$this->config['dmenu']}' sudah terdaftar";
-        }
-
-        // Check if model already exists
-        $modelName = Str::studly(Str::singular($this->config['table']));
-        if ($this->checkModelExists($modelName)) {
-            $warnings[] = "Model '{$modelName}' sudah ada";
-        }
-
-        // Check if controller already exists
-        // URL already normalized in constructor (dashes removed)
-        $controllerName = Str::studly($this->config['url']).'Controller';
-        if ($this->checkControllerExists($controllerName)) {
-            $warnings[] = "Controller '{$controllerName}' sudah ada";
-        }
-
-        // Check if views already exist
-        if ($this->checkViewsExist()) {
-            $warnings[] = "Views untuk '{$this->config['url']}' sudah ada";
-        }
-
-        // Check if JS already exists
-        if ($this->checkJsExists()) {
-            $warnings[] = "JS file '{$this->config['dmenu']}.blade.php' sudah ada";
-        }
-
-        return [
-            'valid' => empty($errors),
-            'errors' => $errors,
-            'warnings' => $warnings,
-        ];
-    }
-
-    public function checkTableExists(string $table): bool
-    {
-        try {
-            $result = DB::select("SHOW TABLES LIKE '{$table}'");
-
-            return ! empty($result);
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    public function checkMenuExists(string $dmenu): bool
-    {
-        return DB::table('sys_dmenu')
-            ->where('dmenu', $dmenu)
-            ->exists();
-    }
-
-    public function checkModelExists(string $modelName): bool
-    {
-        return File::exists(app_path("Models/{$modelName}.php"));
-    }
-
-    public function checkControllerExists(string $controllerName): bool
-    {
-        return File::exists(app_path("Http/Controllers/{$controllerName}.php"));
-    }
-
-    public function checkViewsExist(): bool
-    {
-        $viewsDir = resource_path("views/{$this->config['gmenu']}/{$this->config['url']}");
-
-        return File::exists($viewsDir);
-    }
-
-    public function checkJsExists(): bool
-    {
-        return File::exists(resource_path("views/js/{$this->config['dmenu']}.blade.php"));
+        return $this->validator->validateModuleConfig($this->config);
     }
 
     public function generateModel(): array
     {
-        $modelName = Str::studly(Str::singular($this->config['table']));
-        $modelPath = app_path("Models/{$modelName}.php");
-
-        $exists = File::exists($modelPath);
-
-        // Always regenerate to ensure fillable is up to date
-        $content = ModelTemplate::getTemplate($this->config);
-        File::put($modelPath, $content);
-
-        return [
-            'status' => $exists ? 'updated' : 'created',
-            'message' => $exists ? 'Model diperbarui' : 'Model dibuat',
-            'path' => $modelPath,
-        ];
+        return $this->modelGenerator->generate($this->config);
     }
 
     public function generateController(): array
     {
-        // Ensure MSJBaseController and ValidationHelper exist first
-        MSJBaseController::createIfNotExists();
-        ValidationHelper::createIfNotExists();
-
-        // Generate controller name compatible with PageController
-        // PageController uses ucfirst() so we need to match that behavior
-        $controllerName = Str::studly($this->config['url']).'Controller';
-        $controllerPath = app_path("Http/Controllers/{$controllerName}.php");
-
-        $exists = File::exists($controllerPath);
-
-        // Always regenerate to ensure it's up to date
-        // Check if layout is auto
-        $layoutType = $this->config['layout_type'] ?? 'manual';
-        
-        if ($layoutType === 'auto') {
-            // Determine controller type from config
-            $controllerType = $this->config['controller_type'] ?? 'standr';
-            
-            $content = match ($controllerType) {
-                'system' => SystemController::getTemplate($this->config),
-                'transc' => TranscController::getTemplate($this->config),
-                'standr' => StandrController::getTemplate($this->config),
-                'master' => MasterController::getTemplate($this->config),
-                'report' => ReportController::getTemplate($this->config),
-                'sublnk' => SublnkController::getTemplate($this->config),
-                default => ManualController::getTemplate($this->config),
-            };
-        } else {
-            // Manual layout (existing logic)
-            $content = ManualController::getTemplate($this->config);
-        }
-        
-        File::put($controllerPath, $content);
-
-        return [
-            'status' => $exists ? 'updated' : 'created',
-            'message' => $exists ? 'Controller diperbarui' : 'Controller dibuat',
-            'path' => $controllerPath,
-        ];
+        return $this->controllerGenerator->generate($this->config);
     }
 
     public function generateViews(): array
     {
-        // Determine views based on controller type
-        $layoutType = $this->config['layout_type'] ?? 'manual';
-        $controllerType = $this->config['controller_type'] ?? 'standr';
-        
-        // Determine views folder path based on layout type
-        if ($layoutType === 'auto') {
-            // For auto layouts: {layout}/auto/ (e.g., standr/auto/, master/auto/)
-            $viewsDir = resource_path("views/{$controllerType}/auto");
-        } else {
-            // For manual layout: check gmenu name
-            $gmenuName = DB::table('sys_gmenu')
-                ->where('gmenu', $this->config['gmenu'])
-                ->value('name');
-            
-            // Views folder: if gmenu name is "-", use pages/{url}, otherwise use {gmenu}/{url}
-            $viewBasePath = ($gmenuName === '-') ? 'pages' : $this->config['gmenu'];
-            $viewsDir = resource_path("views/{$viewBasePath}/{$this->config['url']}");
-        }
-        
-        if ($layoutType === 'auto' && $controllerType === 'report') {
-            $views = ['filter', 'result'];
-        } else {
-            $views = ['list', 'add', 'edit', 'show'];
-        }
-
-        // Check if all view files exist
-        $allExist = File::exists($viewsDir);
-        $missingFiles = [];
-
-        if ($allExist) {
-            foreach ($views as $view) {
-                $filePath = "{$viewsDir}/{$view}.blade.php";
-                if (! File::exists($filePath)) {
-                    $missingFiles[] = $view;
-                    $allExist = false;
-                }
-            }
-        }
-
-        // Create directory if not exists
-        if (! File::exists($viewsDir)) {
-            File::makeDirectory($viewsDir, 0755, true);
-        }
-
-        // Regenerate all views to ensure consistency
-        $created = 0;
-        $updated = 0;
-
-        foreach ($views as $view) {
-            $filePath = "{$viewsDir}/{$view}.blade.php";
-            $exists = File::exists($filePath);
-
-            $content = $this->buildViewContent($view);
-            File::put($filePath, $content);
-
-            $exists ? $updated++ : $created++;
-        }
-
-        $message = [];
-        if ($created > 0) {
-            $message[] = "{$created} view dibuat";
-        }
-        if ($updated > 0) {
-            $message[] = "{$updated} view diperbarui";
-        }
-
-        return [
-            'status' => 'success',
-            'message' => implode(', ', $message),
-            'path' => $viewsDir,
-        ];
+        return $this->viewGenerator->generate($this->config);
     }
 
     public function generateJavascript(): array
     {
-        // Ensure JS component exists
-        JsComponent::createComponentIfNotExists();
-
-        // JS file: /resources/views/js/{dmenu}.blade.php
-        $jsFile = resource_path("views/js/{$this->config['dmenu']}.blade.php");
-
-        if (File::exists($jsFile)) {
-            return ['status' => 'skipped', 'message' => 'JS file sudah ada', 'path' => $jsFile];
-        }
-
-        $content = JsTemplate::getTemplate();
-        File::put($jsFile, $content);
-
-        return ['status' => 'success', 'path' => $jsFile];
+        return $this->javascriptGenerator->generate($this->config);
     }
 
     public function registerMenu(): array
     {
         try {
-            // Check if menu already exists
             $exists = DB::table('sys_dmenu')
                 ->where('dmenu', $this->config['dmenu'])
                 ->exists();
 
-            // URL is already normalized in constructor for manual layout
             $urlForMenu = $this->config['url'];
 
             if ($exists) {
-                // Update existing menu
                 DB::table('sys_dmenu')
                     ->where('dmenu', $this->config['dmenu'])
                     ->update([
@@ -389,20 +124,17 @@ class MSJModuleGenerator
     {
         try {
             $table = $this->config['table'];
-
-            // Get columns from database table
             $columns = $this->getTableColumns($table);
+            
             if (empty($columns)) {
                 return ['status' => 'error', 'message' => 'Tidak ada kolom ditemukan di tabel'];
             }
 
-            // Delete existing configuration first to ensure clean state
             $deleted = DB::table('sys_table')
                 ->where('gmenu', $this->config['gmenu'])
                 ->where('dmenu', $this->config['dmenu'])
                 ->delete();
 
-            // Convert columns to field configuration
             $fields = $this->mapColumnsToFields($columns);
             $inserted = 0;
 
@@ -424,13 +156,10 @@ class MSJModuleGenerator
     public function registerAuthorization(): array
     {
         try {
-            // Get all active roles
             $roles = DB::table('sys_roles')->where('isactive', '1')->pluck('idroles');
             $created = 0;
             $updated = 0;
 
-            // Use updateOrInsert to avoid duplicate entry errors
-            // Primary key is composite: ['dmenu', 'idroles']
             foreach ($roles as $role) {
                 $exists = DB::table('sys_auth')
                     ->where('dmenu', $this->config['dmenu'])
@@ -439,29 +168,25 @@ class MSJModuleGenerator
 
                 DB::table('sys_auth')->updateOrInsert(
                     [
-                    'dmenu' => $this->config['dmenu'],
-                    'idroles' => $role,
+                        'dmenu' => $this->config['dmenu'],
+                        'idroles' => $role,
                     ],
                     [
                         'gmenu' => $this->config['gmenu'],
-                    'add' => '1',
-                    'edit' => '1',
-                    'delete' => '1',
-                    'approval' => '0',
-                    'value' => '1',
-                    'print' => '1',
-                    'excel' => '1',
-                    'pdf' => '1',
-                    'rules' => '0',
-                    'isactive' => '1',
+                        'add' => '1',
+                        'edit' => '1',
+                        'delete' => '1',
+                        'approval' => '0',
+                        'value' => '1',
+                        'print' => '1',
+                        'excel' => '1',
+                        'pdf' => '1',
+                        'rules' => '0',
+                        'isactive' => '1',
                     ]
                 );
 
-                if ($exists) {
-                    $updated++;
-                } else {
-                $created++;
-                }
+                $exists ? $updated++ : $created++;
             }
 
             $message = $updated > 0
@@ -474,7 +199,7 @@ class MSJModuleGenerator
         }
     }
 
-    public function getTableColumns(string $table): array
+    protected function getTableColumns(string $table): array
     {
         try {
             return DB::select("SHOW COLUMNS FROM {$table}");
@@ -483,20 +208,16 @@ class MSJModuleGenerator
         }
     }
 
-    public function mapColumnsToFields(array $columns): array
+    protected function mapColumnsToFields(array $columns): array
     {
         $fields = [];
         $urut = 1;
-        $layoutType = $this->config['controller_type'] ?? $this->config['layout'] ?? 'standr';
+        $layoutType = $this->config['layout'] ?? 'manual';
 
         foreach ($columns as $column) {
-            // Determine position based on layout type
             $position = $this->determinePosition($column, $urut, $layoutType);
-            
-            // Detect field type
             $fieldType = $this->detectFieldType($column->Type, $column->Field);
             
-            // Determine if field should be hidden (for auto-generated IDs)
             if ($column->Key === 'PRI' && $column->Extra === 'auto_increment') {
                 $fieldType = 'hidden';
             }
@@ -512,15 +233,15 @@ class MSJModuleGenerator
                 'default' => $column->Default ?? '',
                 'validate' => $this->generateValidation($column),
                 'primary' => $column->Key === 'PRI' ? '1' : '0',
-                'generateid' => '', // Will be set manually if needed
+                'generateid' => '',
                 'filter' => $this->shouldBeFilterable($column) ? '1' : '0',
                 'list' => $this->shouldBeInList($column) ? '1' : '0',
-                'show' => $this->shouldBeShown($column) ? '1' : '0',
-                'query' => '', // Will be set manually for enum/join types
-                'class' => '', // Will be set manually if needed (upper, lower, etc.)
+                'show' => $this->shouldBeShown($column, $fieldType) ? '1' : '0',
+                'query' => '',
+                'class' => '',
                 'note' => '',
-                'sub' => '', // For cascading selects
-                'link' => '', // For clickable fields
+                'sub' => '',
+                'link' => '',
                 'position' => $position,
                 'urut' => $urut++,
             ];
@@ -534,26 +255,16 @@ class MSJModuleGenerator
         $isPrimary = $column->Key === 'PRI';
         
         return match ($layoutType) {
-            // SubLink layout: position '1' for header (first primary), '2' for detail
             'sublnk' => $isPrimary && $urut === 1 ? '1' : '2',
-            
-            // System layout: position '1' for header primary, '2' for detail
             'system' => $isPrimary ? '1' : '2',
-            
-            // Transc layout: position '1' for header, '2' for detail
             'transc' => $urut <= 2 ? '1' : '2',
-            
-            // Master layout: position '3' for main form, '4' for detail/tabs
             'master' => $urut <= 7 ? '3' : '4',
-            
-            // Standard and others: simple position
             default => '1',
         };
     }
 
     protected function extractDecimals(string $type): string
     {
-        // Extract decimals from decimal(10,2) or float(10,2)
         if (preg_match('/\(\d+,(\d+)\)/', $type, $matches)) {
             return $matches[1];
         }
@@ -565,27 +276,25 @@ class MSJModuleGenerator
     {
         $skipFields = ['created_at', 'updated_at', 'user_create', 'user_update', 'deleted_at'];
         
-        return !in_array($column->Field, $skipFields);
+        return ! in_array($column->Field, $skipFields);
     }
 
     protected function shouldBeInList($column): bool
     {
         $skipFields = ['created_at', 'updated_at', 'user_create', 'user_update', 'deleted_at', 'password'];
         
-        return !in_array($column->Field, $skipFields);
+        return ! in_array($column->Field, $skipFields);
     }
 
-    protected function shouldBeShown($column): bool
+    protected function shouldBeShown($column, string $fieldType): bool
     {
         $skipFields = ['created_at', 'updated_at', 'user_create', 'user_update', 'deleted_at', 'password'];
-        $fieldType = $this->detectFieldType($column->Type, $column->Field);
         
-        // Hidden fields should not be shown
         if ($fieldType === 'hidden' || $column->Extra === 'auto_increment') {
             return false;
         }
         
-        return !in_array($column->Field, $skipFields);
+        return ! in_array($column->Field, $skipFields);
     }
 
     protected function detectFieldType(string $type, string $field): string
@@ -648,68 +357,5 @@ class MSJModuleGenerator
         }
 
         return implode('|', $rules);
-    }
-
-    protected function buildViewContent(string $view): string
-    {
-        // Check if layout is auto
-        $layoutType = $this->config['layout_type'] ?? 'manual';
-        
-        if ($layoutType === 'auto') {
-            // Determine controller type from config
-            $controllerType = $this->config['controller_type'] ?? 'standr';
-            
-            return match ($controllerType) {
-                'system' => match ($view) {
-                    'list' => SystemListView::getTemplate(),
-                    'add' => SystemAddView::getTemplate(),
-                    'edit' => SystemEditView::getTemplate(),
-                    'show' => SystemShowView::getTemplate(),
-                    default => '',
-                },
-                'transc' => match ($view) {
-                    'list' => TranscListView::getTemplate(),
-                    'add' => TranscAddView::getTemplate(),
-                    'edit' => TranscEditView::getTemplate(),
-                    'show' => TranscShowView::getTemplate(),
-                    default => '',
-                },
-                'standr' => match ($view) {
-                    'list' => StandrListView::getTemplate(),
-                    'add' => StandrAddView::getTemplate(),
-                    'edit' => StandrEditView::getTemplate(),
-                    'show' => StandrShowView::getTemplate(),
-                    default => '',
-                },
-                'master' => match ($view) {
-                    'list' => MasterListView::getTemplate(),
-                    'add' => MasterAddView::getTemplate(),
-                    'edit' => MasterEditView::getTemplate(),
-                    'show' => MasterShowView::getTemplate(),
-                    default => '',
-                },
-                'report' => match ($view) {
-                    'filter' => ReportFilterView::getTemplate(),
-                    'result' => ReportResultView::getTemplate(),
-                    default => '',
-                },
-                'sublnk' => match ($view) {
-                    'list' => SublnkListView::getTemplate(),
-                    'add' => SublnkAddView::getTemplate(),
-                    'edit' => SublnkEditView::getTemplate(),
-                    'show' => SublnkShowView::getTemplate(),
-                    default => '',
-                },
-                default => '',
-            };
-        }
-        
-        return match ($view) {
-            'list' => ListView::getTemplate($this->config['dmenu']),
-            'add' => AddView::getTemplate($this->config['dmenu']),
-            'edit' => EditView::getTemplate($this->config['dmenu']),
-            'show' => ShowView::getTemplate(),
-            default => '',
-        };
     }
 }

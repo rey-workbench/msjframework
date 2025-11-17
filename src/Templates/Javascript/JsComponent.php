@@ -2,11 +2,11 @@
 
 namespace MSJFramework\LaravelGenerator\Templates\Javascript;
 
-use MSJFramework\LaravelGenerator\Services\Templates\Components\FileComponent;
-use MSJFramework\LaravelGenerator\Services\Templates\Components\FormatComponent;
-use MSJFramework\LaravelGenerator\Services\Templates\Components\FormComponent;
-use MSJFramework\LaravelGenerator\Services\Templates\Components\InputComponent;
-use MSJFramework\LaravelGenerator\Services\Templates\Components\SwalComponent;
+use MSJFramework\LaravelGenerator\Templates\Components\FileComponent;
+use MSJFramework\LaravelGenerator\Templates\Components\FormatComponent;
+use MSJFramework\LaravelGenerator\Templates\Components\FormComponent;
+use MSJFramework\LaravelGenerator\Templates\Components\InputComponent;
+use MSJFramework\LaravelGenerator\Templates\Components\SwalComponent;
 use Illuminate\Support\Facades\File;
 use function resource_path;
 
