@@ -555,18 +555,40 @@ class MSJMakeMenuCommand extends Command
 
             if (!empty($this->tableFields)) {
                 foreach ($this->tableFields as $field) {
+                    // Convert position letter to enum value
+                    $positionMap = [
+                        'S' => 0, // Standard
+                        'H' => 1, // Header
+                        'D' => 2, // Detail
+                        'L' => 3, // Left
+                        'R' => 4, // Right
+                        'F' => 0, // Full (default to standard)
+                    ];
+                    $positionValue = $positionMap[$field['position']] ?? 0;
+                    
                     DB::table('sys_table')->insert([
+                        'gmenu' => $this->menuData['gmenu'],
                         'dmenu' => $this->menuData['dmenu'],
-                        'field' => $field['field'],
-                        'label' => $field['label'],
-                        'type' => $field['type'],
-                        'length' => $field['length'],
-                        'position' => $field['position'],
-                        'required' => $field['required'],
-                        'readonly' => $field['readonly'],
-                        'idenum' => $field['idenum'],
                         'urut' => $field['urut'],
-                        'isactive' => '1',
+                        'field' => $field['field'],
+                        'alias' => $field['label'],
+                        'type' => $field['type'],
+                        'length' => $field['length'] ?? 0,
+                        'decimals' => 0,
+                        'default' => null,
+                        'validate' => $field['required'] === '1' ? 'required' : null,
+                        'primary' => 0,
+                        'generateid' => $field['idenum'] ?? null,
+                        'filter' => 0,
+                        'list' => 1,
+                        'show' => $field['readonly'] === '0' ? 1 : 0,
+                        'query' => null,
+                        'class' => null,
+                        'sub' => null,
+                        'link' => null,
+                        'note' => null,
+                        'position' => $positionValue,
+                        'isactive' => 1,
                         'user_create' => 'system',
                         'created_at' => now(),
                         'updated_at' => now(),
