@@ -54,6 +54,7 @@ class DatabaseIntrospectionService
                     'nullable' => $column->Null === 'YES',
                     'default' => $column->Default,
                     'idenum' => '',
+                    'primary' => $column->Key === 'PRI' ? '1' : '0',
                     'urut' => $urut,
                 ];
                 
