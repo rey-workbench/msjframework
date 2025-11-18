@@ -51,6 +51,7 @@ trait HandlesMenuCreation
 
     /**
      * Create parent sublink container if needed
+     * Note: sys_table for parent query is handled by HandlesTableConfiguration trait
      */
     protected function createSublinkParentIfNeeded(): void
     {
@@ -68,35 +69,6 @@ trait HandlesMenuCreation
             'sub' => $this->menuData['parent_link'],
             'show' => '0',
             'urut' => $this->menuData['dmenu_urut'] - 1,
-            'isactive' => '1',
-            'user_create' => 'system',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Create sys_table for parent query
-        DB::table('sys_table')->insert([
-            'gmenu' => $this->menuData['gmenu'],
-            'dmenu' => $this->menuData['parent_dmenu'],
-            'urut' => 1,
-            'field' => 'query',
-            'alias' => 'Parent Query',
-            'type' => 'report',
-            'length' => 0,
-            'decimals' => '0',
-            'default' => '',
-            'validate' => '',
-            'primary' => '0',
-            'generateid' => '',
-            'filter' => '0',
-            'list' => '1',
-            'show' => '1',
-            'query' => "SELECT gmenu, dmenu, icon, tabel, name AS Detail FROM sys_dmenu WHERE sub = '{$this->menuData['parent_link']}'",
-            'class' => '',
-            'sub' => '',
-            'link' => '',
-            'note' => '',
-            'position' => '1',
             'isactive' => '1',
             'user_create' => 'system',
             'created_at' => now(),
