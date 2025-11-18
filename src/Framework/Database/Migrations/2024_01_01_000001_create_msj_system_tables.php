@@ -68,24 +68,27 @@ return new class extends Migration
 
         // sys_auth - Authorization
         Schema::create('sys_auth', function (Blueprint $table) {
-            $table->id();
-            $table->string('gmenu', 50);
-            $table->string('dmenu', 50);
-            $table->string('idroles', 50);
-            $table->string('value', 1)->default('0');
-            $table->string('add', 1)->default('0');
-            $table->string('edit', 1)->default('0');
-            $table->string('delete', 1)->default('0');
-            $table->string('approval', 1)->default('0');
-            $table->string('rules', 1)->default('0');
-            $table->string('isactive', 1)->default('1');
-            $table->string('user_create', 50)->nullable();
-            $table->string('user_update', 50)->nullable();
-            $table->timestamps();
-
-            $table->foreign('gmenu')->references('gmenu')->on('sys_gmenu')->onDelete('cascade');
-            $table->foreign('dmenu')->references('dmenu')->on('sys_dmenu')->onDelete('cascade');
-            $table->foreign('idroles')->references('idroles')->on('sys_roles')->onDelete('cascade');
+            $table->char('idroles', 6);
+            $table->char('dmenu', 6);
+            $table->char('gmenu', 6);
+            $table->enum('add', [0, 1])->default(0);
+            $table->enum('edit', [0, 1])->default(0);
+            $table->enum('delete', [0, 1])->default(0);
+            $table->enum('approval', [0, 1])->default(0);
+            $table->enum('value', [0, 1])->default(0);
+            $table->enum('print', [0, 1])->default(1);
+            $table->enum('excel', [0, 1])->default(1);
+            $table->enum('pdf', [0, 1])->default(1);
+            $table->enum('rules', [0, 1])->default(0);
+            $table->enum('isactive', [0, 1])->default(1); // 1=active,0=not active
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+            $table->string('user_create')->nullable();
+            $table->string('user_update')->nullable();
+            $table->foreign('idroles')->references('idroles')->on('sys_roles');
+            $table->foreign('dmenu')->references('dmenu')->on('sys_dmenu');
+            $table->foreign('gmenu')->references('gmenu')->on('sys_gmenu');
+            $table->primary(['dmenu', 'idroles']);
         });
 
         // sys_table - Table configuration

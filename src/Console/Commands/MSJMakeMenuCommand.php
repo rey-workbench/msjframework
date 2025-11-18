@@ -249,7 +249,11 @@ class MSJMakeMenuCommand extends Command
                 'add' => confirm('Allow ADD?', true) ? '1' : '0',
                 'edit' => confirm('Allow EDIT?', true) ? '1' : '0',
                 'delete' => confirm('Allow DELETE?', true) ? '1' : '0',
-                'export' => confirm('Allow EXPORT?', true) ? '1' : '0',
+                'approval' => confirm('Allow APPROVAL?', false) ? '1' : '0',
+                'print' => confirm('Allow PRINT?', true) ? '1' : '0',
+                'excel' => confirm('Allow EXCEL?', true) ? '1' : '0',
+                'pdf' => confirm('Allow PDF?', true) ? '1' : '0',
+                'rules' => confirm('Allow RULES?', true) ? '1' : '0',
             ];
         }
 
