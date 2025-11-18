@@ -5,6 +5,7 @@ namespace MSJFramework\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use MSJFramework\Console\Commands\Traits\HandlesTableConfiguration;
+use MSJFramework\Console\Commands\Traits\HandlesMenuCreation;
 use MSJFramework\Services\DatabaseIntrospectionService;
 use MSJFramework\Services\FileGeneratorService;
 use function Laravel\Prompts\text;
@@ -20,6 +21,7 @@ use function Laravel\Prompts\table;
 class MSJMakeMenuCommand extends Command
 {
     use HandlesTableConfiguration;
+    use HandlesMenuCreation;
     protected $signature = 'msj:make menu';
     protected $description = 'Create a new menu with interactive wizard';
 
@@ -560,108 +562,6 @@ class MSJMakeMenuCommand extends Command
         );
 
         $this->newLine();
-    }
-
-    protected function createMenu(): void
-    {
-        DB::beginTransaction();
-
-        try {
-            if (isset($this->menuData['create_new_gmenu'])) {
-                DB::table('sys_gmenu')->insert([
-                    'gmenu' => $this->menuData['gmenu'],
-                    'name' => $this->menuData['gmenu_name'],
-                    'icon' => $this->menuData['gmenu_icon'],
-                    'urut' => $this->menuData['gmenu_urut'],
-                    'isactive' => '1',
-                    'user_create' => 'system',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            // Create parent sublink container if needed
-            if (isset($this->menuData['create_parent'])) {
-                DB::table('sys_dmenu')->insert([
-                    'dmenu' => $this->menuData['parent_dmenu'],
-                    'gmenu' => $this->menuData['gmenu'],
-                    'name' => $this->menuData['parent_name'],
-                    'url' => strtolower($this->menuData['parent_dmenu']),
-                    'tabel' => '-',
-                    'layout' => 'sublnk',
-                    'sub' => $this->menuData['parent_link'],
-                    'show' => '0',
-                    'urut' => $this->menuData['dmenu_urut'] - 1,
-                    'isactive' => '1',
-                    'user_create' => 'system',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            DB::table('sys_dmenu')->insert([
-                'dmenu' => $this->menuData['dmenu'],
-                'gmenu' => $this->menuData['gmenu'],
-                'name' => $this->menuData['dmenu_name'],
-                'url' => $this->menuData['url'],
-                'tabel' => $this->menuData['table'],
-                'layout' => $this->menuData['layout'],
-                'where' => $this->menuData['where_clause'],
-                'sub' => $this->menuData['parent_link'] ?? null,
-                'js' => $this->menuData['js_menu'],
-                'urut' => $this->menuData['dmenu_urut'],
-                'isactive' => '1',
-                'user_create' => 'system',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            foreach ($this->menuData['auth_roles'] as $roleId => $permissions) {
-                DB::table('sys_auth')->insert([
-                    'gmenu' => $this->menuData['gmenu'],
-                    'dmenu' => $this->menuData['dmenu'],
-                    'idroles' => $roleId,
-                    'value' => $permissions['value'],
-                    'add' => $permissions['add'],
-                    'edit' => $permissions['edit'],
-                    'delete' => $permissions['delete'],
-                    'approval' => $permissions['approval'],
-                    'print' => $permissions['print'],
-                    'excel' => $permissions['excel'],
-                    'pdf' => $permissions['pdf'],
-                    'rules' => $permissions['rules'],
-                    'isactive' => '1',
-                    'user_create' => 'system',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            // Insert sys_table records using trait method
-            $this->insertTableConfiguration();
-
-            if (!empty($this->menuData['id_rules'])) {
-                foreach ($this->menuData['id_rules'] as $rule) {
-                    DB::table('sys_id')->insert([
-                        'dmenu' => $this->menuData['dmenu'],
-                        'source' => $rule['source'],
-                        'internal' => $rule['internal'],
-                        'external' => $rule['external'],
-                        'length' => $rule['length'],
-                        'urut' => $rule['urut'],
-                        'isactive' => '1',
-                        'user_create' => 'system',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
     }
 
     protected function displaySuccess(): void
