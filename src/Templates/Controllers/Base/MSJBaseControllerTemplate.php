@@ -5,6 +5,7 @@ namespace MSJFramework\LaravelGenerator\Templates\Controllers\Base;
 use MSJFramework\LaravelGenerator\Templates\Helpers\ErrorHelperTemplate;
 use MSJFramework\LaravelGenerator\Templates\Helpers\FormatHelperTemplate;
 use MSJFramework\LaravelGenerator\Templates\Helpers\FunctionHelperTemplate;
+use MSJFramework\LaravelGenerator\Templates\Helpers\IdGeneratorTemplate;
 use MSJFramework\LaravelGenerator\Templates\Helpers\TableExporterTemplate;
 use Illuminate\Support\Facades\File;
 use function app_path;
@@ -387,6 +388,7 @@ PHP;
         FunctionHelperTemplate::createIfNotExists();
         ErrorHelperTemplate::createIfNotExists();
         TableExporterTemplate::createIfNotExists();
+        IdGeneratorTemplate::createIfNotExists();
 
         $controllerPath = app_path('Http/Controllers/MSJBaseController.php');
 

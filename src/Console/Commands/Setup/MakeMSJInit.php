@@ -3,9 +3,15 @@
 namespace MSJFramework\LaravelGenerator\Console\Commands\Setup;
 
 use MSJFramework\LaravelGenerator\Console\Commands\Concerns\HasConsoleStyling;
+use MSJFramework\LaravelGenerator\Templates\Controllers\Base\PageControllerTemplate;
+use MSJFramework\LaravelGenerator\Templates\Helpers\FormatHelperTemplate;
+use MSJFramework\LaravelGenerator\Templates\Helpers\FunctionHelperTemplate;
+use MSJFramework\LaravelGenerator\Templates\Helpers\ValidationHelperTemplate;
+use MSJFramework\LaravelGenerator\Templates\Helpers\ErrorHelperTemplate;
+use MSJFramework\LaravelGenerator\Templates\Helpers\TableExporterTemplate;
+use MSJFramework\LaravelGenerator\Templates\Helpers\IdGeneratorTemplate;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use MSJFramework\LaravelGenerator\Templates\Controllers\Base\PageControllerTemplate;
 
 class MakeMSJInit extends Command
 {
@@ -225,6 +231,85 @@ PHP;
                 'status' => 'error',
                 'message' => 'Failed to add routes: ' . $e->getMessage(),
                 'path' => $webRoutesPath,
+            ];
+        }
+    }
+
+    protected function publishMigrations(): array
+    {
+        try {
+            $templateMigrationsPath = __DIR__ . '/../../../Templates/Database/Migrations';
+            $projectMigrationsPath = database_path('migrations');
+
+            if (!File::isDirectory($projectMigrationsPath)) {
+                File::makeDirectory($projectMigrationsPath, 0755, true);
+            }
+
+            $migrationFiles = [
+                '2024_01_01_000001_create_sys_gmenu_table.php',
+                '2024_01_01_000002_create_sys_dmenu_table.php',
+                '2024_01_01_000003_create_sys_roles_table.php',
+                '2024_01_01_000004_create_sys_auth_table.php',
+                '2024_01_01_000005_create_sys_table_table.php',
+                '2024_01_01_000006_create_sys_app_table.php',
+                '2024_01_01_000007_create_sys_log_table.php',
+                '2024_01_01_000008_create_sys_id_table.php',
+                '2024_01_01_000009_create_sys_counter_table.php',
+                '2024_01_01_000010_create_sys_enum_table.php',
+                '2024_01_01_000011_create_sys_number_table.php',
+            ];
+
+            $created = 0;
+            $skipped = 0;
+
+            foreach ($migrationFiles as $filename) {
+                $sourcePath = $templateMigrationsPath . '/' . $filename;
+                $destPath = $projectMigrationsPath . '/' . $filename;
+
+                if (!File::exists($destPath)) {
+                    if (! File::exists($sourcePath)) {
+                        throw new \RuntimeException("Template migration missing: {$filename}");
+                    }
+
+                    File::copy($sourcePath, $destPath);
+                    $created++;
+                } else {
+                    $skipped++;
+                }
+            }
+
+            return [
+                'status' => 'success',
+                'message' => "Published {$created} migration files" . ($skipped > 0 ? " ({$skipped} skipped)" : ''),
+                'path' => $projectMigrationsPath,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'error',
+                'message' => 'Failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    protected function generateHelpers(): array
+    {
+        try {
+            FormatHelperTemplate::createIfNotExists();
+            FunctionHelperTemplate::createIfNotExists();
+            ValidationHelperTemplate::createIfNotExists();
+            ErrorHelperTemplate::createIfNotExists();
+            TableExporterTemplate::createIfNotExists();
+            IdGeneratorTemplate::createIfNotExists();
+
+            return [
+                'status' => 'success',
+                'message' => 'Generated 6 helper files',
+                'path' => app_path('Helpers'),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'error',
+                'message' => 'Failed: ' . $e->getMessage(),
             ];
         }
     }
