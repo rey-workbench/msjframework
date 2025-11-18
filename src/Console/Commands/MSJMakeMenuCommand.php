@@ -4,6 +4,7 @@ namespace MSJFramework\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use MSJFramework\Console\Commands\Traits\HandlesTableConfiguration;
 use MSJFramework\Services\DatabaseIntrospectionService;
 use MSJFramework\Services\FileGeneratorService;
 use function Laravel\Prompts\text;
@@ -18,6 +19,7 @@ use function Laravel\Prompts\table;
 
 class MSJMakeMenuCommand extends Command
 {
+    use HandlesTableConfiguration;
     protected $signature = 'msj:make menu';
     protected $description = 'Create a new menu with interactive wizard';
 
@@ -67,155 +69,6 @@ class MSJMakeMenuCommand extends Command
             error('Error: ' . $e->getMessage());
             return Command::FAILURE;
         }
-    }
-
-    protected function determineDecimalPlaces(?string $dbType): string
-    {
-        if (!$dbType) {
-            return '0';
-        }
-
-        $type = strtolower($dbType);
-
-        if (preg_match('/\(\s*\d+\s*,\s*(\d+)\s*\)/', $type, $matches)) {
-            $decimals = (int) $matches[1];
-            return (string) min(3, max(0, $decimals));
-        }
-
-        if (str_contains($type, 'decimal') || str_contains($type, 'float') || str_contains($type, 'double')) {
-            return '2';
-        }
-
-        return '0';
-    }
-
-    protected function insertReportTableConfig(): void
-    {
-        if (empty($this->tableFields)) {
-            return;
-        }
-
-        // For report layout, first row is the query definition
-        DB::table('sys_table')->insert([
-            'gmenu' => $this->menuData['gmenu'],
-            'dmenu' => $this->menuData['dmenu'],
-            'urut' => 1,
-            'field' => 'query',
-            'alias' => 'Report Query',
-            'type' => 'report',
-            'length' => 0,
-            'decimals' => '0',
-            'default' => '',
-            'validate' => '',
-            'primary' => '0',
-            'generateid' => '',
-            'filter' => '0',
-            'list' => '1',
-            'show' => '1',
-            'query' => $this->generateReportQuery(),
-            'class' => '',
-            'sub' => '',
-            'link' => '',
-            'note' => '',
-            'position' => '0',
-            'isactive' => '1',
-            'user_create' => 'system',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Subsequent rows are filter fields
-        $urut = 2;
-        foreach ($this->tableFields as $field) {
-            $decimals = $this->determineDecimalPlaces($field['db_type'] ?? null);
-
-            DB::table('sys_table')->insert([
-                'gmenu' => $this->menuData['gmenu'],
-                'dmenu' => $this->menuData['dmenu'],
-                'urut' => $urut++,
-                'field' => $field['field'],
-                'alias' => $field['label'],
-                'type' => $field['type'],
-                'length' => $field['length'] ?? 0,
-                'decimals' => $decimals,
-                'default' => $field['default'] ?? '',
-                'validate' => $field['required'] === '1' ? 'required' : 'nullable',
-                'primary' => '0',
-                'generateid' => '',
-                'filter' => '1',
-                'list' => '0',
-                'show' => '0',
-                'query' => $field['query'] ?? '',
-                'class' => $field['class'] ?? '',
-                'sub' => '',
-                'link' => '',
-                'note' => $field['note'] ?? '',
-                'position' => '0',
-                'isactive' => '1',
-                'user_create' => 'system',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-    }
-
-    protected function insertFormTableConfig(): void
-    {
-        if (empty($this->tableFields)) {
-            return;
-        }
-
-        foreach ($this->tableFields as $field) {
-            // Convert position letter to enum value
-            $positionMap = [
-                'S' => 0, // Standard
-                'H' => 1, // Header
-                'D' => 2, // Detail
-                'L' => 3, // Left
-                'R' => 4, // Right
-                'F' => 0, // Full (default to standard)
-            ];
-            $positionValue = $positionMap[$field['position']] ?? 0;
-            
-            $decimals = $this->determineDecimalPlaces($field['db_type'] ?? null);
-
-            DB::table('sys_table')->insert([
-                'gmenu' => $this->menuData['gmenu'],
-                'dmenu' => $this->menuData['dmenu'],
-                'urut' => $field['urut'],
-                'field' => $field['field'],
-                'alias' => $field['label'],
-                'type' => $field['type'],
-                'length' => $field['length'] ?? 0,
-                'decimals' => $decimals,
-                'default' => $field['default'] ?? '',
-                'validate' => $field['required'] === '1' ? 'required' : '',
-                'primary' => $field['primary'] ?? '0',
-                'generateid' => $field['idenum'] ?? '',
-                'filter' => $field['filter'] ?? '1',
-                'list' => '1',
-                'show' => $field['readonly'] === '0' ? '1' : '0',
-                'query' => $field['query'] ?? '',
-                'class' => $field['class'] ?? '',
-                'sub' => $field['sub'] ?? '',
-                'link' => $field['link'] ?? '',
-                'note' => $field['note'] ?? '',
-                'position' => (string) $positionValue,
-                'isactive' => '1',
-                'user_create' => 'system',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-    }
-
-    protected function generateReportQuery(): string
-    {
-        // Generate basic SELECT query from detected fields
-        $table = $this->menuData['table'];
-        $fields = collect($this->tableFields)->pluck('field')->implode(', ');
-        
-        return "SELECT {$fields} FROM {$table} WHERE isactive = '1' ORDER BY created_at DESC";
     }
 
     protected function displayBanner(): void
@@ -702,12 +555,8 @@ class MSJMakeMenuCommand extends Command
                 ]);
             }
 
-            // Insert sys_table records based on layout type
-            if ($this->menuData['layout'] === 'report') {
-                $this->insertReportTableConfig();
-            } else {
-                $this->insertFormTableConfig();
-            }
+            // Insert sys_table records using trait method
+            $this->insertTableConfiguration();
 
             if (!empty($this->menuData['id_rules'])) {
                 foreach ($this->menuData['id_rules'] as $rule) {
