@@ -48,6 +48,7 @@ class MSJMakeMenuCommand extends Command
 
             if ($this->menuData['layout'] !== 'manual') {
                 $this->configureTableMetadata();
+                $this->configureSublinkParent();
             }
 
             if (confirm('Configure ID auto-generation?', false)) {
@@ -259,6 +260,67 @@ class MSJMakeMenuCommand extends Command
             ];
         }
 
+        $this->newLine();
+    }
+
+    protected function configureSublinkParent(): void
+    {
+        if ($this->menuData['layout'] !== 'sublnk') {
+            return;
+        }
+
+        note('Step 4b: Sublink Parent Configuration');
+        
+        $existingSublinks = DB::table('sys_dmenu')
+            ->where('isactive', '1')
+            ->where('show', '0')
+            ->whereNotNull('sub')
+            ->get(['dmenu', 'name', 'sub'])
+            ->mapWithKeys(fn($item) => [$item->dmenu => "{$item->dmenu} - {$item->name}"])
+            ->toArray();
+
+        $useExisting = false;
+        if (!empty($existingSublinks)) {
+            $useExisting = confirm('Use existing sublink parent?', false);
+        }
+
+        if ($useExisting && !empty($existingSublinks)) {
+            $parentDmenu = select(
+                label: 'Select parent sublink menu',
+                options: $existingSublinks,
+            );
+            
+            $parent = DB::table('sys_dmenu')->where('dmenu', $parentDmenu)->first();
+            $this->menuData['parent_link'] = $parent->sub;
+        } else {
+            info('Creating new sublink parent container...');
+            
+            $parentDmenu = text(
+                label: 'Parent Menu ID (e.g., SUBXXX)',
+                placeholder: 'SUB001',
+                required: true,
+            );
+            
+            $parentName = text(
+                label: 'Parent Menu Name',
+                placeholder: 'List of Sub Items',
+                required: true
+            );
+            
+            $this->menuData['parent_link'] = $parentDmenu;
+            $this->menuData['create_parent'] = true;
+            $this->menuData['parent_dmenu'] = $parentDmenu;
+            $this->menuData['parent_name'] = $parentName;
+        }
+        
+        // Set link attribute for primary key field
+        foreach ($this->tableFields as &$field) {
+            if ($field['primary'] === '1') {
+                $field['link'] = $this->menuData['parent_link'];
+                break;
+            }
+        }
+        
         $this->newLine();
     }
 
@@ -518,6 +580,25 @@ class MSJMakeMenuCommand extends Command
                 ]);
             }
 
+            // Create parent sublink container if needed
+            if (isset($this->menuData['create_parent'])) {
+                DB::table('sys_dmenu')->insert([
+                    'dmenu' => $this->menuData['parent_dmenu'],
+                    'gmenu' => $this->menuData['gmenu'],
+                    'name' => $this->menuData['parent_name'],
+                    'url' => strtolower($this->menuData['parent_dmenu']),
+                    'tabel' => '-',
+                    'layout' => 'sublnk',
+                    'sub' => $this->menuData['parent_link'],
+                    'show' => '0',
+                    'urut' => $this->menuData['dmenu_urut'] - 1,
+                    'isactive' => '1',
+                    'user_create' => 'system',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             DB::table('sys_dmenu')->insert([
                 'dmenu' => $this->menuData['dmenu'],
                 'gmenu' => $this->menuData['gmenu'],
@@ -526,6 +607,7 @@ class MSJMakeMenuCommand extends Command
                 'tabel' => $this->menuData['table'],
                 'layout' => $this->menuData['layout'],
                 'where' => $this->menuData['where_clause'],
+                'sub' => $this->menuData['parent_link'] ?? null,
                 'js' => $this->menuData['js_menu'],
                 'urut' => $this->menuData['dmenu_urut'],
                 'isactive' => '1',
