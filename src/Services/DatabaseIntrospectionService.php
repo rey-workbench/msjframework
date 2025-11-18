@@ -17,9 +17,22 @@ class DatabaseIntrospectionService
             $database = DB::getDatabaseName();
             $key = "Tables_in_{$database}";
             
+            $excludedTables = [
+                'migrations',
+                'password_reset_tokens',
+                'password_resets',
+                'failed_jobs',
+                'personal_access_tokens',
+                'cache',
+                'cache_locks',
+                'sessions',
+                'jobs',
+                'job_batches',
+            ];
+            
             return collect($tables)
                 ->pluck($key)
-                ->filter(fn($table) => !str_starts_with($table, 'sys_'))
+                ->filter(fn($table) => !in_array($table, $excludedTables))
                 ->mapWithKeys(fn($table) => [$table => $table])
                 ->toArray();
         } catch (\Exception $e) {
