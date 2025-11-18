@@ -141,6 +141,37 @@ trait HandlesTableConfiguration
             return;
         }
 
+        // First row: query definition for header data
+        DB::table('sys_table')->insert([
+            'gmenu' => $this->menuData['gmenu'],
+            'dmenu' => $this->menuData['dmenu'],
+            'urut' => 1,
+            'field' => 'query',
+            'alias' => 'Sublink Query',
+            'type' => 'sublink',
+            'length' => 0,
+            'decimals' => '0',
+            'default' => '',
+            'validate' => '',
+            'primary' => '0',
+            'generateid' => '',
+            'filter' => '0',
+            'list' => '1',
+            'show' => '1',
+            'query' => $this->generateSublinkQuery(),
+            'class' => '',
+            'sub' => '',
+            'link' => '',
+            'note' => '',
+            'position' => '0',
+            'isactive' => '1',
+            'user_create' => 'system',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Subsequent rows: form fields with position-based grouping
+        $urut = 2;
         foreach ($this->tableFields as $field) {
             // Determine position based on field characteristics
             $position = '0';
@@ -152,7 +183,7 @@ trait HandlesTableConfiguration
                 $position = '2'; // Detail fields
             }
 
-            $this->insertFormField($field, [
+            $this->insertFormField(array_merge($field, ['urut' => $urut++]), [
                 'filter' => '1',
                 'list' => '1',
                 'show' => '1',
@@ -324,6 +355,28 @@ trait HandlesTableConfiguration
         }
         
         return "SELECT {$fields} FROM {$table} WHERE isactive = '1' ORDER BY created_at DESC";
+    }
+
+    /**
+     * Generate sublink query (header data only)
+     */
+    protected function generateSublinkQuery(): string
+    {
+        $table = $this->menuData['table'];
+        
+        // Get header fields (position = 1) and primary key fields
+        $headerFields = collect($this->tableFields)
+            ->filter(function($field) {
+                return $field['primary'] === '1' || ($field['position'] ?? 'L') === 'H';
+            })
+            ->pluck('field')
+            ->implode(', ');
+        
+        if (empty($headerFields)) {
+            $headerFields = '*';
+        }
+        
+        return "SELECT {$headerFields} FROM {$table} WHERE isactive = '1' ORDER BY created_at DESC";
     }
 
     /**
