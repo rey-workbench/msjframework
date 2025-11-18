@@ -44,7 +44,7 @@ class MSJMakeMenuCommand extends Command
             $this->configureDetailMenu();
             $this->configureAuthorization();
 
-            if ($this->menuData['layout'] \!== 'manual') {
+            if ($this->menuData['layout'] !== 'manual') {
                 $this->configureTableMetadata();
             }
 
@@ -113,7 +113,7 @@ class MSJMakeMenuCommand extends Command
 
         $useExisting = confirm('Use existing group menu?', false);
 
-        if ($useExisting && \!empty($existingGmenus)) {
+        if ($useExisting && !empty($existingGmenus)) {
             $this->menuData['gmenu'] = select(
                 label: 'Select group menu',
                 options: $existingGmenus,
@@ -178,7 +178,7 @@ class MSJMakeMenuCommand extends Command
         // Get available tables from service
         $availableTables = $this->db->getAvailableTables();
         
-        if (\!empty($availableTables)) {
+        if (!empty($availableTables)) {
             $this->menuData['table'] = select(
                 label: 'Select Database Table',
                 options: $availableTables,
@@ -226,7 +226,7 @@ class MSJMakeMenuCommand extends Command
             ->toArray();
 
         if (empty($roles)) {
-            warning('No roles found\! Please create roles first.');
+            warning('No roles found! Please create roles first.');
             $this->menuData['roles'] = [];
             return;
         }
@@ -263,7 +263,7 @@ class MSJMakeMenuCommand extends Command
         // Auto-detect fields using service
         $detectedFields = $this->db->detectTableFields($this->menuData['table']);
         
-        if (\!empty($detectedFields)) {
+        if (!empty($detectedFields)) {
             info("✓ Detected " . count($detectedFields) . " fields from table '{$this->menuData['table']}'");
             $this->newLine();
             
@@ -545,7 +545,7 @@ class MSJMakeMenuCommand extends Command
                 ]);
             }
 
-            if (\!empty($this->tableFields)) {
+            if (!empty($this->tableFields)) {
                 foreach ($this->tableFields as $field) {
                     DB::table('sys_table')->insert([
                         'dmenu' => $this->menuData['dmenu'],
@@ -566,7 +566,7 @@ class MSJMakeMenuCommand extends Command
                 }
             }
 
-            if (\!empty($this->menuData['id_rules'])) {
+            if (!empty($this->menuData['id_rules'])) {
                 foreach ($this->menuData['id_rules'] as $rule) {
                     DB::table('sys_id')->insert([
                         'dmenu' => $this->menuData['dmenu'],
@@ -594,7 +594,7 @@ class MSJMakeMenuCommand extends Command
     {
         $this->newLine();
         info('╔═══════════════════════════════════════════╗');
-        info('║          Menu Created Successfully\!       ║');
+        info('║          Menu Created Successfully!       ║');
         info('╚═══════════════════════════════════════════╝');
         $this->newLine();
 
@@ -664,7 +664,7 @@ class MSJMakeMenuCommand extends Command
 
     protected function validateGmenuId($value): ?string
     {
-        if (\!preg_match('/^[A-Z0-9]{3,10}$/', $value)) {
+        if (!preg_match('/^[A-Z0-9]{3,10}$/', $value)) {
             return 'Group Menu ID must be 3-10 uppercase alphanumeric characters';
         }
         return null;
@@ -672,7 +672,7 @@ class MSJMakeMenuCommand extends Command
 
     protected function validateDmenuId($value): ?string
     {
-        if (\!preg_match('/^[A-Z0-9]{3,10}$/', $value)) {
+        if (!preg_match('/^[A-Z0-9]{3,10}$/', $value)) {
             return 'Detail Menu ID must be 3-10 uppercase alphanumeric characters';
         }
 
@@ -685,7 +685,7 @@ class MSJMakeMenuCommand extends Command
 
     protected function validateUrl($value): ?string
     {
-        if (\!preg_match('/^[a-z0-9\-]+$/', $value)) {
+        if (!preg_match('/^[a-z0-9\-]+$/', $value)) {
             return 'URL must be lowercase alphanumeric with hyphens only';
         }
 
