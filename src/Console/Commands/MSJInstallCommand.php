@@ -9,16 +9,16 @@ class MSJInstallCommand extends Command
 {
     protected PublishService $publisher;
     protected $signature = 'msj:install 
-                            {--force : Overwrite existing files}
-                            {--migrations : Publish migrations only}
-                            {--controllers : Publish controllers only}
-                            {--helpers : Publish helpers only}
-                            {--views : Publish views only}
-                            {--seeders : Publish seeders only}
-                            {--examples : Publish examples only}
-                            {--all : Publish everything}';
+                            {--force : Timpa file yang sudah ada}
+                            {--migrations : Hanya publish migrasi}
+                            {--controllers : Hanya publish controller}
+                            {--helpers : Hanya publish helper}
+                            {--views : Hanya publish view}
+                            {--seeders : Hanya publish seeder}
+                            {--examples : Hanya publish contoh}
+                            {--all : Publish semua komponen}';
 
-    protected $description = 'Install MSJ Framework components';
+    protected $description = 'Instal komponen MSJ Framework';
 
     public function __construct()
     {
@@ -28,7 +28,7 @@ class MSJInstallCommand extends Command
 
     public function handle(): int
     {
-        $this->info('🚀 Installing MSJ Framework...');
+        $this->info('🚀 Menginstal MSJ Framework...');
         $this->displayEnvironment();
         $this->newLine();
 
@@ -73,20 +73,20 @@ class MSJInstallCommand extends Command
         }
 
         $this->newLine();
-        $this->components->info('✅ MSJ Framework installed successfully!');
+        $this->components->info('✅ MSJ Framework berhasil diinstal!');
         $this->newLine();
 
         if ($publishAll || $this->option('migrations')) {
-            $this->components->warn('⚠️  Next steps:');
+            $this->components->warn('⚠️  Langkah selanjutnya:');
             $this->components->bulletList([
-                'Run migrations: php artisan migrate',
-                'Run seeder: php artisan db:seed --class=MSJSystemSeeder',
-                'Check examples: see MSJ-Examples folder (use --examples)',
+                'Jalankan migrasi: php artisan migrate',
+                'Jalankan seeder: php artisan db:seed --class=MSJSystemSeeder',
+                'Lihat contoh: folder MSJ-Examples (gunakan --examples)',
             ]);
         }
 
         $this->newLine();
-        $this->components->info('📚 Documentation: https://github.com/rey-workbench/msjframework');
+        $this->components->info('📚 Dokumentasi: https://github.com/rey-workbench/msjframework');
 
         return Command::SUCCESS;
     }
@@ -104,76 +104,76 @@ class MSJInstallCommand extends Command
     protected function displayEnvironment(): void
     {
         $env = $this->publisher->getEnvironmentInfo();
-        $this->components->info("{$env['icon']} Detected: {$env['type']}");
-        $this->components->info("   Using {$env['executor']}");
+        $this->components->info("{$env['icon']} Terdeteksi: {$env['type']}");
+        $this->components->info("   Menggunakan {$env['executor']}");
     }
 
     protected function publishMigrations(array $options): void
     {
-        $this->components->task('Publishing migrations', function () use ($options) {
+        $this->components->task('Mempublish migrasi', function () use ($options) {
             return $this->publisher->executePublish('msj-migrations', $options);
         });
     }
 
     protected function publishControllers(array $options): void
     {
-        $this->components->task('Publishing controllers', function () use ($options) {
+        $this->components->task('Mempublish controller', function () use ($options) {
             return $this->publisher->executePublish('msj-controllers', $options);
         });
     }
 
     protected function publishHelpers(array $options): void
     {
-        $this->components->task('Publishing helpers', function () use ($options) {
+        $this->components->task('Mempublish helper', function () use ($options) {
             return $this->publisher->executePublish('msj-helpers', $options);
         });
     }
 
     protected function publishModels(array $options): void
     {
-        $this->components->task('Publishing models', function () use ($options) {
+        $this->components->task('Mempublish model', function () use ($options) {
             return $this->publisher->executePublish('msj-models', $options);
         });
     }
 
     protected function publishMiddleware(array $options): void
     {
-        $this->components->task('Publishing middleware', function () use ($options) {
+        $this->components->task('Mempublish middleware', function () use ($options) {
             return $this->publisher->executePublish('msj-middleware', $options);
         });
     }
 
     protected function publishViews(array $options): void
     {
-        $this->components->task('Publishing views', function () use ($options) {
+        $this->components->task('Mempublish view', function () use ($options) {
             return $this->publisher->executePublish('msj-views', $options);
         });
     }
 
     protected function publishRoutes(array $options): void
     {
-        $this->components->task('Publishing routes', function () use ($options) {
+        $this->components->task('Mempublish routes', function () use ($options) {
             return $this->publisher->executePublish('msj-routes', $options);
         });
     }
 
     protected function publishConfig(array $options): void
     {
-        $this->components->task('Publishing config', function () use ($options) {
+        $this->components->task('Mempublish config', function () use ($options) {
             return $this->publisher->executePublish('msj-config', $options);
         });
     }
 
     protected function publishSeeders(array $options): void
     {
-        $this->components->task('Publishing seeders', function () use ($options) {
+        $this->components->task('Mempublish seeder', function () use ($options) {
             return $this->publisher->executePublish('msj-seeders', $options);
         });
     }
 
     protected function publishExamples(array $options): void
     {
-        $this->components->task('Publishing examples', function () use ($options) {
+        $this->components->task('Mempublish contoh', function () use ($options) {
             return $this->publisher->executePublish('msj-examples', $options);
         });
     }

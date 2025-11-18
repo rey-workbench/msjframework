@@ -24,7 +24,7 @@ class MSJMakeMenuCommand extends Command
     use HandlesTableConfiguration;
     use HandlesMenuCreation;
     protected $signature = 'msj:make menu';
-    protected $description = 'Create a new menu with interactive wizard';
+    protected $description = 'Membuat menu baru dengan panduan interaktif';
 
     protected DatabaseIntrospectionService $db;
     protected FileGeneratorService $generator;
@@ -54,19 +54,19 @@ class MSJMakeMenuCommand extends Command
                 $this->configureSublinkParent();
             }
 
-            if (confirm('Configure ID auto-generation?', false)) {
+            if (confirm('Konfigurasi penomoran otomatis?', false)) {
                 $this->configureIDGeneration();
             }
 
             $this->reviewConfiguration();
 
-            if (confirm('Proceed with menu creation?', true)) {
+            if (confirm('Lanjutkan proses pembuatan menu?', true)) {
                 $this->createMenu();
                 $this->displaySuccess();
                 return Command::SUCCESS;
             }
 
-            warning('Menu creation cancelled.');
+            warning('Pembuatan menu dibatalkan.');
             return Command::FAILURE;
 
         } catch (\Exception $e) {
@@ -79,50 +79,50 @@ class MSJMakeMenuCommand extends Command
     {
         $this->newLine();
         info('╔═══════════════════════════════════════════╗');
-        info('║   MSJ Framework - Menu Creation Wizard   ║');
+        info('║  MSJ Framework - Panduan Pembuatan Menu  ║');
         info('╚═══════════════════════════════════════════╝');
         $this->newLine();
     }
 
     protected function selectMenuType(): void
     {
-        note('Step 1: Select Menu Layout Type');
+        note('Langkah 1: Pilih Tipe Layout Menu');
 
         $this->menuData['layout'] = search(
-            label: 'Choose layout type',
+            label: 'Pilih tipe layout',
             options: fn (string $value) => strlen($value) > 0
                 ? collect([
-                    'master' => 'Master - Simple CRUD (auto-generated)',
-                    'transc' => 'Transaction - Header-Detail (auto-generated)',
-                    'system' => 'System - Configuration forms (auto-generated)',
-                    'standr' => 'Standard - Standard CRUD (auto-generated)',
-                    'sublnk' => 'Sub-Linking - Link between tables (auto-generated)',
-                    'report' => 'Report - Filter and result (auto-generated)',
-                    'manual' => 'Manual - Custom implementation (full control)',
+                    'master' => 'Master - CRUD sederhana (otomatis)',
+                    'transc' => 'Transaksi - Header-Detail (otomatis)',
+                    'system' => 'Sistem - Form konfigurasi (otomatis)',
+                    'standr' => 'Standar - CRUD standar (otomatis)',
+                    'sublnk' => 'Sublink - Relasi antar tabel (otomatis)',
+                    'report' => 'Laporan - Filter dan hasil (otomatis)',
+                    'manual' => 'Manual - Implementasi kustom (penuh)',
                 ])->filter(fn($label, $key) => 
                     str_contains(strtolower($label), strtolower($value)) ||
                     str_contains(strtolower($key), strtolower($value))
                 )->all()
                 : [
-                    'master' => 'Master - Simple CRUD (auto-generated)',
-                    'transc' => 'Transaction - Header-Detail (auto-generated)',
-                    'system' => 'System - Configuration forms (auto-generated)',
-                    'standr' => 'Standard - Standard CRUD (auto-generated)',
-                    'sublnk' => 'Sub-Linking - Link between tables (auto-generated)',
-                    'report' => 'Report - Filter and result (auto-generated)',
-                    'manual' => 'Manual - Custom implementation (full control)',
+                    'master' => 'Master - CRUD sederhana (otomatis)',
+                    'transc' => 'Transaksi - Header-Detail (otomatis)',
+                    'system' => 'Sistem - Form konfigurasi (otomatis)',
+                    'standr' => 'Standar - CRUD standar (otomatis)',
+                    'sublnk' => 'Sublink - Relasi antar tabel (otomatis)',
+                    'report' => 'Laporan - Filter dan hasil (otomatis)',
+                    'manual' => 'Manual - Implementasi kustom (penuh)',
                 ],
-            placeholder: 'Start typing to search...',
-            hint: 'Auto layouts generate UI from metadata, Manual gives full control'
+            placeholder: 'Mulai ketik untuk mencari...',
+            hint: 'Layout otomatis membuat UI dari metadata, Manual memberi kontrol penuh'
         );
 
-        info("Selected: {$this->menuData['layout']} layout");
+        info("Tipe layout dipilih: {$this->menuData['layout']}");
         $this->newLine();
     }
 
     protected function configureGroupMenu(): void
     {
-        note('Step 2: Group Menu Configuration');
+        note('Langkah 2: Konfigurasi Menu Grup');
 
         $existingGmenus = DB::table('sys_gmenu')
             ->where('isactive', '1')
@@ -131,37 +131,37 @@ class MSJMakeMenuCommand extends Command
             ->mapWithKeys(fn($item) => [$item->gmenu => "{$item->gmenu} - {$item->name}"])
             ->toArray();
 
-        $useExisting = confirm('Use existing group menu?', false);
+        $useExisting = confirm('Gunakan menu grup yang sudah ada?', false);
 
         if ($useExisting && !empty($existingGmenus)) {
             $this->menuData['gmenu'] = search(
-                label: 'Select group menu',
+                label: 'Pilih menu grup',
                 options: fn($value) => $this->filterOptions($existingGmenus, $value),
-                placeholder: 'Start typing to search...'
+                placeholder: 'Mulai ketik untuk mencari...'
             );
         } else {
             $this->menuData['gmenu'] = text(
-                label: 'Group Menu ID (e.g., MSJ001)',
+                label: 'ID Menu Grup (contoh: MSJ001)',
                 placeholder: 'MSJ001',
                 required: true,
                 validate: fn($value) => $this->validateGmenuId($value)
             );
 
             $this->menuData['gmenu_name'] = text(
-                label: 'Group Menu Name',
+                label: 'Nama Menu Grup',
                 placeholder: 'Master Data',
                 required: true
             );
 
             $this->menuData['gmenu_icon'] = text(
-                label: 'Group Menu Icon (optional)',
+                label: 'Ikon Menu Grup (opsional)',
                 placeholder: 'fas fa-database',
                 default: 'fas fa-folder'
             );
 
             $lastUrut = DB::table('sys_gmenu')->max('urut') ?? 0;
             $this->menuData['gmenu_urut'] = (int) text(
-                label: 'Display Order',
+                label: 'Urutan Tampilan',
                 default: (string)($lastUrut + 1),
                 required: true
             );
@@ -174,24 +174,24 @@ class MSJMakeMenuCommand extends Command
 
     protected function configureDetailMenu(): void
     {
-        note('Step 3: Detail Menu Configuration');
+        note('Langkah 3: Konfigurasi Menu Detail');
 
         $this->menuData['dmenu'] = text(
-            label: 'Detail Menu ID (e.g., MSJ001)',
+            label: 'ID Menu Detail (contoh: MSJ001)',
             placeholder: 'MSJ001',
             required: true,
             validate: fn($value) => $this->validateDmenuId($value)
         );
 
         $this->menuData['dmenu_name'] = text(
-            label: 'Menu Name',
-            placeholder: 'Employee Master',
+            label: 'Nama Menu',
+            placeholder: 'Master Karyawan',
             required: true
         );
 
         $this->menuData['url'] = text(
-            label: 'URL/Route (e.g., employee-master)',
-            placeholder: 'employee-master',
+            label: 'URL/Rute (contoh: master-karyawan)',
+            placeholder: 'master-karyawan',
             required: true,
             validate: fn($value) => $this->validateUrl($value)
         );
@@ -201,14 +201,14 @@ class MSJMakeMenuCommand extends Command
         
         if (!empty($availableTables)) {
             $this->menuData['table'] = search(
-                label: 'Select Database Table',
+                label: 'Pilih tabel database',
                 options: fn($value) => $this->filterOptions($availableTables, $value),
-                placeholder: 'Start typing to search...',
-                hint: 'Choose from available tables in database'
+                placeholder: 'Mulai ketik untuk mencari...',
+                hint: 'Pilih dari tabel yang tersedia di database'
             );
         } else {
             $this->menuData['table'] = text(
-                label: 'Database Table Name',
+                label: 'Nama tabel database',
                 placeholder: 'mst_employee',
                 required: true,
                 validate: fn($value) => $this->db->validateTableName($value)
@@ -216,12 +216,12 @@ class MSJMakeMenuCommand extends Command
         }
 
         $this->menuData['where_clause'] = text(
-            label: 'WHERE Clause (optional)',
+            label: 'Klausa WHERE (opsional)',
             placeholder: "isactive='1'",
             default: ''
         );
 
-        $generateJs = confirm('Generate custom JavaScript file?', false);
+        $generateJs = confirm('Buat file JavaScript kustom?', false);
         $this->menuData['js_menu'] = $generateJs ? '1' : '0';
 
         $lastUrut = DB::table('sys_dmenu')
@@ -229,7 +229,7 @@ class MSJMakeMenuCommand extends Command
             ->max('urut') ?? 0;
 
         $this->menuData['dmenu_urut'] = (int) text(
-            label: 'Display Order',
+            label: 'Urutan Tampilan',
             default: (string)($lastUrut + 1),
             required: true
         );
@@ -239,7 +239,7 @@ class MSJMakeMenuCommand extends Command
 
     protected function configureAuthorization(): void
     {
-        note('Step 4: Authorization Configuration');
+        note('Langkah 4: Konfigurasi Hak Akses');
 
         $roles = DB::table('sys_roles')
             ->where('isactive', '1')
@@ -247,34 +247,34 @@ class MSJMakeMenuCommand extends Command
             ->toArray();
 
         if (empty($roles)) {
-            warning('No roles found! Please create roles first.');
+            warning('Role tidak ditemukan! Silakan buat role terlebih dahulu.');
             $this->menuData['roles'] = [];
             return;
         }
 
         $selectedRoles = multiselect(
-            label: 'Select roles with access',
+            label: 'Pilih role yang mendapatkan akses',
             options: $roles,
             required: true,
-            hint: 'Use space to select, enter to confirm'
+            hint: 'Gunakan spasi untuk memilih, Enter untuk konfirmasi'
         );
 
         $this->menuData['auth_roles'] = [];
 
         foreach ($selectedRoles as $roleId) {
             $this->newLine();
-            info("Configuring permissions for: {$roles[$roleId]}");
+            info("Mengatur hak akses untuk: {$roles[$roleId]}");
 
             $this->menuData['auth_roles'][$roleId] = [
                 'value' => '1',
-                'add' => confirm('Allow ADD?', true) ? '1' : '0',
-                'edit' => confirm('Allow EDIT?', true) ? '1' : '0',
-                'delete' => confirm('Allow DELETE?', true) ? '1' : '0',
-                'approval' => confirm('Allow APPROVAL?', false) ? '1' : '0',
-                'print' => confirm('Allow PRINT?', true) ? '1' : '0',
-                'excel' => confirm('Allow EXCEL?', true) ? '1' : '0',
-                'pdf' => confirm('Allow PDF?', true) ? '1' : '0',
-                'rules' => confirm('Allow RULES?', true) ? '1' : '0',
+                'add' => confirm('Izinkan TAMBAH?', true) ? '1' : '0',
+                'edit' => confirm('Izinkan UBAH?', true) ? '1' : '0',
+                'delete' => confirm('Izinkan HAPUS?', true) ? '1' : '0',
+                'approval' => confirm('Izinkan APPROVAL?', false) ? '1' : '0',
+                'print' => confirm('Izinkan CETAK?', true) ? '1' : '0',
+                'excel' => confirm('Izinkan EXCEL?', true) ? '1' : '0',
+                'pdf' => confirm('Izinkan PDF?', true) ? '1' : '0',
+                'rules' => confirm('Izinkan RULES?', true) ? '1' : '0',
             ];
         }
 
@@ -287,7 +287,7 @@ class MSJMakeMenuCommand extends Command
             return;
         }
 
-        note('Step 4b: Sublink Parent Configuration');
+        note('Langkah 4b: Konfigurasi Parent Sublink');
         
         $existingSublinks = DB::table('sys_dmenu')
             ->where('isactive', '1')
@@ -299,30 +299,30 @@ class MSJMakeMenuCommand extends Command
 
         $useExisting = false;
         if (!empty($existingSublinks)) {
-            $useExisting = confirm('Use existing sublink parent?', false);
+            $useExisting = confirm('Gunakan parent sublink yang sudah ada?', false);
         }
 
         if ($useExisting && !empty($existingSublinks)) {
             $parentDmenu = search(
-                label: 'Select parent sublink menu',
+                label: 'Pilih menu parent sublink',
                 options: fn($value) => $this->filterOptions($existingSublinks, $value),
-                placeholder: 'Start typing to search...'
+                placeholder: 'Mulai ketik untuk mencari...'
             );
             
             $parent = DB::table('sys_dmenu')->where('dmenu', $parentDmenu)->first();
             $this->menuData['parent_link'] = $parent->sub;
         } else {
-            info('Creating new sublink parent container...');
+            info('Membuat parent sublink baru...');
             
             $parentDmenu = text(
-                label: 'Parent Menu ID (e.g., SUBXXX)',
+                label: 'ID Menu Parent (contoh: SUBXXX)',
                 placeholder: 'SUB001',
                 required: true,
             );
             
             $parentName = text(
-                label: 'Parent Menu Name',
-                placeholder: 'List of Sub Items',
+                label: 'Nama Menu Parent',
+                placeholder: 'Daftar Sub Item',
                 required: true
             );
             
@@ -345,36 +345,36 @@ class MSJMakeMenuCommand extends Command
 
     protected function configureTableMetadata(): void
     {
-        note('Step 5: Table Metadata Configuration (for auto-generated forms)');
+        note('Langkah 5: Konfigurasi Metadata Tabel (untuk form otomatis)');
 
         // Auto-detect fields using service
         $detectedFields = $this->db->detectTableFields($this->menuData['table']);
         
         if (!empty($detectedFields)) {
-            info("✓ Detected " . count($detectedFields) . " fields from table '{$this->menuData['table']}'");
+            info("✓ Terdeteksi " . count($detectedFields) . " kolom dari tabel '{$this->menuData['table']}'");
             $this->newLine();
             
-            $useAutoDetect = confirm('Use auto-detected fields?', true);
+            $useAutoDetect = confirm('Gunakan field hasil deteksi otomatis?', true);
             
             if ($useAutoDetect) {
                 table(
-                    ['Field', 'Type', 'Nullable', 'Default'],
+                    ['Kolom', 'Tipe', 'Bisa Null', 'Default'],
                     collect($detectedFields)->map(fn($f) => [
                         $f['field'],
                         $f['db_type'],
-                        $f['nullable'] ? 'Yes' : 'No',
+                        $f['nullable'] ? 'Ya' : 'Tidak',
                         $f['default'] ?? '-'
                     ])->toArray()
                 );
                 $this->newLine();
                 
                 $selectedFields = multiselect(
-                    label: 'Select fields to include in form',
+                    label: 'Pilih field yang digunakan di form',
                     options: collect($detectedFields)->mapWithKeys(fn($f) => [
                         $f['field'] => "{$f['field']} ({$f['type']})"
                     ])->toArray(),
                     required: true,
-                    hint: 'Space to select, Enter to confirm'
+                    hint: 'Gunakan spasi untuk memilih, Enter untuk konfirmasi'
                 );
                 
                 foreach ($selectedFields as $fieldName) {
@@ -387,32 +387,26 @@ class MSJMakeMenuCommand extends Command
                 info("✓ " . count($this->tableFields) . " fields configured");
                 $this->newLine();
                 
-                if (confirm('Customize field settings?', false)) {
+                if (confirm('Ubah pengaturan field?', false)) {
                     $this->customizeFields();
                 }
                 
                 return;
             }
         } else {
-            warning("Could not auto-detect fields from table '{$this->menuData['table']}'");
-            info('You will need to configure fields manually');
+            warning("Tidak dapat mendeteksi field dari tabel '{$this->menuData['table']}'");
+            info('Anda perlu mengkonfigurasi field secara manual');
             $this->newLine();
         }
 
         // Manual configuration fallback
         $this->configureFieldsManually();
-    }
-
-    protected function customizeFields(): void
-    {
-        $this->newLine();
-        info('Customize field settings:');
         $this->newLine();
         
         foreach ($this->tableFields as $index => &$field) {
-            info("Field: {$field['label']} ({$field['field']})");
+            info("Kolom: {$field['label']} ({$field['field']})");
             
-            if (confirm("Customize this field?", false)) {
+            if (confirm('Sesuaikan kolom ini?', false)) {
                 $field['label'] = text(
                     label: 'Label',
                     default: $field['label'],
@@ -420,37 +414,37 @@ class MSJMakeMenuCommand extends Command
                 );
                 
                 $field['type'] = select(
-                    label: 'Field Type',
+                    label: 'Tipe Field',
                     options: [
-                        'char' => 'Text (short)',
-                        'string' => 'Text (long)',
+                        'char' => 'Teks (pendek)',
+                        'string' => 'Teks (panjang)',
                         'text' => 'Textarea',
-                        'number' => 'Number',
-                        'currency' => 'Currency',
-                        'date' => 'Date',
+                        'number' => 'Angka',
+                        'currency' => 'Mata uang',
+                        'date' => 'Tanggal',
                         'email' => 'Email',
                         'password' => 'Password',
-                        'file' => 'File Upload',
-                        'image' => 'Image Upload',
-                        'enum' => 'Select/Dropdown',
+                        'file' => 'Unggah File',
+                        'image' => 'Unggah Gambar',
+                        'enum' => 'Dropdown',
                         'search' => 'Search Modal',
-                        'hidden' => 'Hidden Field',
+                        'hidden' => 'Field Tersembunyi',
                     ],
                     default: $field['type']
                 );
                 
                 $field['position'] = select(
-                    label: 'Position',
-                    options: ['L' => 'Left', 'R' => 'Right', 'F' => 'Full Width'],
+                    label: 'Posisi',
+                    options: ['L' => 'Kiri', 'R' => 'Kanan', 'F' => 'Lebar Penuh'],
                     default: $field['position']
                 );
                 
-                $field['required'] = confirm('Required?', $field['required'] === '1') ? '1' : '0';
-                $field['readonly'] = confirm('Read-only?', $field['readonly'] === '1') ? '1' : '0';
+                $field['required'] = confirm('Wajib diisi?', $field['required'] === '1') ? '1' : '0';
+                $field['readonly'] = confirm('Hanya baca?', $field['readonly'] === '1') ? '1' : '0';
                 
                 if ($field['type'] === 'enum') {
                     $field['idenum'] = text(
-                        label: 'Enum ID',
+                        label: 'ID Enum',
                         placeholder: 'STATUS',
                         required: true
                     );
@@ -460,53 +454,16 @@ class MSJMakeMenuCommand extends Command
             }
         }
         
-        info('✓ Field customization complete');
+        info('✓ Penyesuaian field selesai');
         $this->newLine();
     }
-
-    protected function configureFieldsManually(): void
-    {
-        info('Configure fields that will be displayed in the form');
-        $this->newLine();
-
-        $urut = 1;
-        do {
-            $field = [
-                'field' => text(label: "Field #{$urut} - Column Name", placeholder: 'emp_name', required: true),
-                'label' => text(label: 'Label', placeholder: 'Employee Name', required: true),
-                'type' => select(label: 'Field Type', options: [
-                    'char' => 'Text (short)', 'string' => 'Text (long)', 'text' => 'Textarea',
-                    'number' => 'Number', 'currency' => 'Currency', 'date' => 'Date',
-                    'email' => 'Email', 'password' => 'Password', 'file' => 'File Upload',
-                    'image' => 'Image Upload', 'enum' => 'Dropdown (enum)', 'radio' => 'Radio',
-                    'search' => 'Search Modal', 'hidden' => 'Hidden Field',
-                ]),
-                'length' => (int) text(label: 'Max Length', default: '100', required: true),
-                'position' => select(label: 'Position', options: ['L' => 'Left Column', 'R' => 'Right Column', 'F' => 'Full Width']),
-                'required' => confirm('Required field?', true) ? '1' : '0',
-                'readonly' => confirm('Read-only?', false) ? '1' : '0',
-                'idenum' => '',
-                'urut' => $urut,
-            ];
-
-            if ($field['type'] === 'enum') {
-                $field['idenum'] = text(label: 'Enum ID (for dropdown values)', placeholder: 'STATUS', required: true);
-            }
-
-            $this->tableFields[] = $field;
-            info("✓ Field '{$field['label']}' added");
-            $this->newLine();
-            $urut++;
-        } while (confirm('Add another field?', true));
-
-        info("Total {$urut} fields configured");
         $this->newLine();
     }
 
     protected function configureIDGeneration(): void
     {
-        note('Step 6: ID Generation Configuration');
-        info('Configure automatic ID generation pattern (e.g., EMP-2024-0001)');
+        note('Langkah 6: Pengaturan ID Otomatis');
+        info('Pengaturan pola ID otomatis (misalnya, EMP-2024-0001)');
         $this->newLine();
 
         $this->menuData['id_rules'] = [];
@@ -516,23 +473,23 @@ class MSJMakeMenuCommand extends Command
             $rule = ['urut' => $urut];
             
             $rule['source'] = select(
-                label: "Segment #{$urut} - Source",
+                label: "Segmen #{$urut} - Sumber",
                 options: [
-                    'ext' => 'External String (fixed text)',
-                    'int' => 'Internal ID (auto increment)',
-                    'dtm' => 'Date (MMYYYY)',
-                    'dty' => 'Date (YYYYMM)',
-                    'num' => 'Counter (3 digits)',
+                    'ext' => 'String eksternal (teks tetap)',
+                    'int' => 'ID internal (auto increment)',
+                    'dtm' => 'Tanggal (MMYYYY)',
+                    'dty' => 'Tanggal (YYYYMM)',
+                    'num' => 'Counter (3 digit)',
                     'usr' => 'Username',
                 ],
                 required: true
             );
 
             if ($rule['source'] === 'ext') {
-                $rule['external'] = text(label: 'Fixed Text', placeholder: 'EMP', required: true);
+                $rule['external'] = text(label: 'Teks tetap', placeholder: 'EMP', required: true);
                 $rule['internal'] = '';
             } elseif ($rule['source'] === 'int') {
-                $rule['internal'] = text(label: 'Field Name', placeholder: 'dept_code', required: true);
+                $rule['internal'] = text(label: 'Nama field', placeholder: 'dept_code', required: true);
                 $rule['external'] = '';
             } else {
                 $rule['external'] = '';
@@ -540,16 +497,16 @@ class MSJMakeMenuCommand extends Command
             }
 
             $rule['length'] = (int) text(
-                label: 'Length',
+                label: 'Panjang',
                 default: $rule['source'] === 'cnt' ? '4' : '2',
                 required: true
             );
 
             $this->menuData['id_rules'][] = $rule;
-            info("✓ Segment added: {$rule['source']} (length: {$rule['length']})");
+            info("✓ Segmen ditambahkan: {$rule['source']} (panjang: {$rule['length']})");
             $this->newLine();
             $urut++;
-        } while (confirm('Add another segment?', $urut < 5));
+        } while (confirm('Tambah segmen lagi?', $urut < 5));
 
         $this->newLine();
     }
@@ -558,23 +515,23 @@ class MSJMakeMenuCommand extends Command
     {
         $this->newLine();
         note('═══════════════════════════════════════════');
-        note('Configuration Review');
+        note('Ringkasan Konfigurasi');
         note('═══════════════════════════════════════════');
         $this->newLine();
 
         table(
-            ['Setting', 'Value'],
+            ['Pengaturan', 'Nilai'],
             [
-                ['Layout Type', $this->menuData['layout']],
-                ['Group Menu', $this->menuData['gmenu']],
-                ['Detail Menu', $this->menuData['dmenu']],
-                ['Menu Name', $this->menuData['dmenu_name']],
+                ['Tipe Layout', $this->menuData['layout']],
+                ['Menu Grup', $this->menuData['gmenu']],
+                ['Menu Detail', $this->menuData['dmenu']],
+                ['Nama Menu', $this->menuData['dmenu_name']],
                 ['URL', $this->menuData['url']],
-                ['Table', $this->menuData['table']],
-                ['JavaScript File', $this->menuData['js_menu'] === '1' ? 'Yes' : 'No'],
-                ['Authorized Roles', count($this->menuData['auth_roles'])],
-                ['Table Fields', count($this->tableFields)],
-                ['ID Generation', !empty($this->menuData['id_rules']) ? 'Yes' : 'No'],
+                ['Tabel', $this->menuData['table']],
+                ['File JavaScript', $this->menuData['js_menu'] === '1' ? 'Ya' : 'Tidak'],
+                ['Jumlah Role', count($this->menuData['auth_roles'])],
+                ['Jumlah Field', count($this->tableFields)],
+                ['Aturan ID', !empty($this->menuData['id_rules']) ? 'Ya' : 'Tidak'],
             ]
         );
 
@@ -585,16 +542,16 @@ class MSJMakeMenuCommand extends Command
     {
         $this->newLine();
         info('╔═══════════════════════════════════════════╗');
-        info('║          Menu Created Successfully!       ║');
+        info('║        Menu Berhasil Dibuat!             ║');
         info('╚═══════════════════════════════════════════╝');
         $this->newLine();
 
-        note('Access your new menu at:');
+        note('Akses menu baru Anda di:');
         info("URL: /{$this->menuData['url']}");
         $this->newLine();
 
         if ($this->menuData['layout'] === 'manual') {
-            info('✨ Manual Layout - Auto-Generating Files...');
+            info('✨ Layout Manual - Membuat file otomatis...');
             $this->newLine();
             
             try {
@@ -613,43 +570,45 @@ class MSJMakeMenuCommand extends Command
                     $this->menuData['url'],
                     $this->menuData['table']
                 );
-                info('✓ Views: list.blade.php, add.blade.php, edit.blade.php, show.blade.php');
+                info('✓ View: list.blade.php, add.blade.php, edit.blade.php, show.blade.php');
                 
                 $this->newLine();
-                info('📁 Generated files:');
+                info('📁 File yang dibuat:');
                 info("   app/Models/{$model['name']}.php");
                 info("   app/Http/Controllers/{$controller['name']}.php");
                 info("   resources/views/{$this->menuData['gmenu']}/{$this->menuData['url']}/");
-            } catch (\Exception $e) {
-                warning('⚠️  Auto-generation failed: ' . $e->getMessage());
-                info('You may need to create files manually.');
-                info('See: MANUAL_LAYOUT_GUIDE.md for examples');
+            } catch (
+\Exception $e) {
+                warning('⚠️  Pembuatan file otomatis gagal: ' . $e->getMessage());
+                info('Anda mungkin perlu membuat file secara manual.');
+                info('Lihat: MANUAL_LAYOUT_GUIDE.md untuk contoh.');
             }
         } else {
-            info('✓ Controller: Auto-handled by ' . ucfirst($this->menuData['layout']) . 'Controller');
-            info('✓ Views: Auto-generated from sys_table metadata');
-            info('✓ CRUD Operations: Ready to use!');
+            info('✓ Controller: Ditangani otomatis oleh ' . ucfirst($this->menuData['layout']) . 'Controller');
+            info('✓ View: Dibentuk otomatis dari metadata sys_table');
+            info('✓ Operasi CRUD: Siap digunakan!');
         }
 
         // Generate JavaScript file if requested
         if ($this->menuData['js_menu'] === '1') {
             $this->newLine();
-            info('✨ Generating JavaScript file...');
+            info('✨ Membuat file JavaScript...');
             
             try {
                 $js = $this->generator->generateJavaScriptFile($this->menuData['dmenu']);
                 info("✓ JavaScript: {$js['name']}");
                 info("   {$js['path']}");
-            } catch (\Exception $e) {
-                warning('⚠️  JavaScript generation failed: ' . $e->getMessage());
+            } catch (
+Exception $e) {
+                warning('⚠️  Pembuatan JavaScript gagal: ' . $e->getMessage());
             }
         }
 
         $this->newLine();
-        note('Next steps:');
-        info('1. Login to http://127.0.0.1/login');
-        info('2. Navigate to the new menu');
-        info('3. Test CRUD operations');
+        note('Langkah selanjutnya:');
+        info('1. Login ke http://127.0.0.1/login');
+        info('2. Buka menu baru yang dibuat');
+        info('3. Uji operasi CRUD');
         $this->newLine();
     }
 
@@ -670,20 +629,25 @@ class MSJMakeMenuCommand extends Command
 
     protected function validateGmenuId($value): ?string
     {
-        if (!preg_match('/^[A-Z0-9]{3,10}$/', $value)) {
-            return 'Group Menu ID must be 3-10 uppercase alphanumeric characters';
+        if (!preg_match('/^[a-z0-9]{6}$/', $value)) {
+            return 'ID Menu Grup harus 6 karakter, huruf kecil atau angka';
         }
+
+        if (DB::table('sys_gmenu')->where('gmenu', $value)->exists()) {
+            return 'ID Menu Grup sudah digunakan';
+        }
+
         return null;
     }
 
     protected function validateDmenuId($value): ?string
     {
-        if (!preg_match('/^[A-Z0-9]{3,10}$/', $value)) {
-            return 'Detail Menu ID must be 3-10 uppercase alphanumeric characters';
+        if (!preg_match('/^[a-z0-9]{6}$/', $value)) {
+            return 'ID Menu Detail harus 6 karakter, huruf kecil atau angka';
         }
 
         if (DB::table('sys_dmenu')->where('dmenu', $value)->exists()) {
-            return 'Detail Menu ID already exists';
+            return 'ID Menu Detail sudah digunakan';
         }
 
         return null;
@@ -692,11 +656,11 @@ class MSJMakeMenuCommand extends Command
     protected function validateUrl($value): ?string
     {
         if (!preg_match('/^[a-z0-9\-]+$/', $value)) {
-            return 'URL must be lowercase alphanumeric with hyphens only';
+            return 'URL harus huruf kecil dengan angka dan strip (-)';
         }
 
         if (DB::table('sys_dmenu')->where('url', $value)->exists()) {
-            return 'URL already exists';
+            return 'URL sudah digunakan';
         }
 
         return null;
