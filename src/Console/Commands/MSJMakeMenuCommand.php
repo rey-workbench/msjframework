@@ -88,18 +88,31 @@ class MSJMakeMenuCommand extends Command
     {
         note('Step 1: Select Menu Layout Type');
 
-        $this->menuData['layout'] = select(
+        $this->menuData['layout'] = search(
             label: 'Choose layout type',
-            options: [
-                'master' => 'Master - Simple CRUD (auto-generated)',
-                'transc' => 'Transaction - Header-Detail (auto-generated)',
-                'system' => 'System - Configuration forms (auto-generated)',
-                'standr' => 'Standard - Standard CRUD (auto-generated)',
-                'sublnk' => 'Sub-Linking - Link between tables (auto-generated)',
-                'report' => 'Report - Filter and result (auto-generated)',
-                'manual' => 'Manual - Custom implementation (full control)',
-            ],
-            search: true,
+            options: fn (string $value) => strlen($value) > 0
+                ? collect([
+                    'master' => 'Master - Simple CRUD (auto-generated)',
+                    'transc' => 'Transaction - Header-Detail (auto-generated)',
+                    'system' => 'System - Configuration forms (auto-generated)',
+                    'standr' => 'Standard - Standard CRUD (auto-generated)',
+                    'sublnk' => 'Sub-Linking - Link between tables (auto-generated)',
+                    'report' => 'Report - Filter and result (auto-generated)',
+                    'manual' => 'Manual - Custom implementation (full control)',
+                ])->filter(fn($label, $key) => 
+                    str_contains(strtolower($label), strtolower($value)) ||
+                    str_contains(strtolower($key), strtolower($value))
+                )->all()
+                : [
+                    'master' => 'Master - Simple CRUD (auto-generated)',
+                    'transc' => 'Transaction - Header-Detail (auto-generated)',
+                    'system' => 'System - Configuration forms (auto-generated)',
+                    'standr' => 'Standard - Standard CRUD (auto-generated)',
+                    'sublnk' => 'Sub-Linking - Link between tables (auto-generated)',
+                    'report' => 'Report - Filter and result (auto-generated)',
+                    'manual' => 'Manual - Custom implementation (full control)',
+                ],
+            placeholder: 'Start typing to search...',
             hint: 'Auto layouts generate UI from metadata, Manual gives full control'
         );
 
@@ -121,10 +134,10 @@ class MSJMakeMenuCommand extends Command
         $useExisting = confirm('Use existing group menu?', false);
 
         if ($useExisting && !empty($existingGmenus)) {
-            $this->menuData['gmenu'] = select(
+            $this->menuData['gmenu'] = search(
                 label: 'Select group menu',
-                options: $existingGmenus,
-                search: true,
+                options: fn($value) => $this->filterOptions($existingGmenus, $value),
+                placeholder: 'Start typing to search...'
             );
         } else {
             $this->menuData['gmenu'] = text(
@@ -187,11 +200,10 @@ class MSJMakeMenuCommand extends Command
         $availableTables = $this->db->getAvailableTables();
         
         if (!empty($availableTables)) {
-            $this->menuData['table'] = select(
+            $this->menuData['table'] = search(
                 label: 'Select Database Table',
-                options: $availableTables,
-                scroll: 15,
-                search: true,
+                options: fn($value) => $this->filterOptions($availableTables, $value),
+                placeholder: 'Start typing to search...',
                 hint: 'Choose from available tables in database'
             );
         } else {
@@ -244,7 +256,6 @@ class MSJMakeMenuCommand extends Command
             label: 'Select roles with access',
             options: $roles,
             required: true,
-            search: true,
             hint: 'Use space to select, enter to confirm'
         );
 
@@ -292,10 +303,10 @@ class MSJMakeMenuCommand extends Command
         }
 
         if ($useExisting && !empty($existingSublinks)) {
-            $parentDmenu = select(
+            $parentDmenu = search(
                 label: 'Select parent sublink menu',
-                options: $existingSublinks,
-                search: true,
+                options: fn($value) => $this->filterOptions($existingSublinks, $value),
+                placeholder: 'Start typing to search...'
             );
             
             $parent = DB::table('sys_dmenu')->where('dmenu', $parentDmenu)->first();
@@ -363,7 +374,6 @@ class MSJMakeMenuCommand extends Command
                         $f['field'] => "{$f['field']} ({$f['type']})"
                     ])->toArray(),
                     required: true,
-                    search: true,
                     hint: 'Space to select, Enter to confirm'
                 );
                 
@@ -426,15 +436,13 @@ class MSJMakeMenuCommand extends Command
                         'search' => 'Search Modal',
                         'hidden' => 'Hidden Field',
                     ],
-                    default: $field['type'],
-                    search: true,
+                    default: $field['type']
                 );
                 
                 $field['position'] = select(
                     label: 'Position',
                     options: ['L' => 'Left', 'R' => 'Right', 'F' => 'Full Width'],
-                    default: $field['position'],
-                    search: true,
+                    default: $field['position']
                 );
                 
                 $field['required'] = confirm('Required?', $field['required'] === '1') ? '1' : '0';
@@ -472,9 +480,9 @@ class MSJMakeMenuCommand extends Command
                     'email' => 'Email', 'password' => 'Password', 'file' => 'File Upload',
                     'image' => 'Image Upload', 'enum' => 'Dropdown (enum)', 'radio' => 'Radio',
                     'search' => 'Search Modal', 'hidden' => 'Hidden Field',
-                ], search: true),
+                ]),
                 'length' => (int) text(label: 'Max Length', default: '100', required: true),
-                'position' => select(label: 'Position', options: ['L' => 'Left Column', 'R' => 'Right Column', 'F' => 'Full Width'], search: true),
+                'position' => select(label: 'Position', options: ['L' => 'Left Column', 'R' => 'Right Column', 'F' => 'Full Width']),
                 'required' => confirm('Required field?', true) ? '1' : '0',
                 'readonly' => confirm('Read-only?', false) ? '1' : '0',
                 'idenum' => '',
@@ -511,14 +519,12 @@ class MSJMakeMenuCommand extends Command
                 label: "Segment #{$urut} - Source",
                 options: [
                     'ext' => 'External String (fixed text)',
-                    'int' => 'Internal Field (from form)',
-                    'th2' => 'Year (2 digits)',
-                    'th4' => 'Year (4 digits)',
-                    'bln' => 'Month (01-12)',
-                    'tgl' => 'Date (01-31)',
-                    'cnt' => 'Counter (auto-increment)',
+                    'int' => 'Internal ID (auto increment)',
+                    'dtm' => 'Date (MMYYYY)',
+                    'dty' => 'Date (YYYYMM)',
+                    'num' => 'Counter (3 digits)',
+                    'usr' => 'Username',
                 ],
-                search: true,
                 required: true
             );
 
@@ -645,6 +651,21 @@ class MSJMakeMenuCommand extends Command
         info('2. Navigate to the new menu');
         info('3. Test CRUD operations');
         $this->newLine();
+    }
+
+    /**
+     * Filter options for search prompt
+     */
+    protected function filterOptions(array $options, string $value): array
+    {
+        if (strlen($value) === 0) {
+            return $options;
+        }
+
+        return collect($options)->filter(function($label, $key) use ($value) {
+            return str_contains(strtolower($label), strtolower($value)) ||
+                   str_contains(strtolower($key), strtolower($value));
+        })->all();
     }
 
     protected function validateGmenuId($value): ?string
