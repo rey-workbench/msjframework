@@ -1,7 +1,6 @@
 <?php
 
 namespace MSJFramework\Services;
-
 class FileGeneratorService
 {
     protected DatabaseIntrospectionService $db;
@@ -21,7 +20,7 @@ class FileGeneratorService
     public function generateModel(string $tableName): array
     {
         $modelName = $this->getModelName($tableName);
-        $columns = $this->db->getTableColumns($tableName);
+        $columns = $this->db->getTableColumns($tableName)->all();
         
         $fillable = $this->extractFillableFields($columns);
         $casts = $this->extractCasts($columns);

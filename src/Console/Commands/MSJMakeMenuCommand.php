@@ -69,6 +69,26 @@ class MSJMakeMenuCommand extends Command
         }
     }
 
+    protected function determineDecimalPlaces(?string $dbType): string
+    {
+        if (!$dbType) {
+            return '0';
+        }
+
+        $type = strtolower($dbType);
+
+        if (preg_match('/\(\s*\d+\s*,\s*(\d+)\s*\)/', $type, $matches)) {
+            $decimals = (int) $matches[1];
+            return (string) min(3, max(0, $decimals));
+        }
+
+        if (str_contains($type, 'decimal') || str_contains($type, 'float') || str_contains($type, 'double')) {
+            return '2';
+        }
+
+        return '0';
+    }
+
     protected function displayBanner(): void
     {
         $this->newLine();
@@ -566,6 +586,8 @@ class MSJMakeMenuCommand extends Command
                     ];
                     $positionValue = $positionMap[$field['position']] ?? 0;
                     
+                    $decimals = $this->determineDecimalPlaces($field['db_type'] ?? null);
+
                     DB::table('sys_table')->insert([
                         'gmenu' => $this->menuData['gmenu'],
                         'dmenu' => $this->menuData['dmenu'],
@@ -574,7 +596,7 @@ class MSJMakeMenuCommand extends Command
                         'alias' => $field['label'],
                         'type' => $field['type'],
                         'length' => $field['length'] ?? 0,
-                        'decimals' => 0,
+                        'decimals' => $decimals,
                         'default' => null,
                         'validate' => $field['required'] === '1' ? 'required' : null,
                         'primary' => 0,
