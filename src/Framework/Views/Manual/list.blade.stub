@@ -1,1 +1,68 @@
+@extends('layouts.app')
 
+@section('content')
+    @include('layouts.navbars.auth.topnav', ['title' => $title_menu])
+    <div class="container-fluid py-4">
+        <div class="card">
+            <div class="card-header pb-0">
+                <div class="d-flex align-items-center">
+                    <h6 class="mb-0">{{ $title_menu }}</h6>
+                    @if($authorize->add == '1')
+                        <a href="/{{ $url_menu }}/add" class="btn btn-primary btn-sm ms-auto">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    @endif
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+{{tableHeaders}}
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($items as $item)
+                                <tr>
+{{tableRows}}
+                                    <td>
+                                        <a href="/{{ $url_menu }}/show/{{ encrypt($item->id) }}" 
+                                           class="btn btn-link btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @if($authorize->edit == '1')
+                                            <a href="/{{ $url_menu }}/edit/{{ encrypt($item->id) }}" 
+                                               class="btn btn-link btn-sm" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        @endif
+                                        @if($authorize->delete == '1')
+                                            <form action="/{{ $url_menu }}/destroy/{{ encrypt($item->id) }}" 
+                                                  method="POST" style="display:inline;"
+                                                  onsubmit="return confirm('Are you sure?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-link btn-sm text-danger" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="100" class="text-center">No data found</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-3">
+                    {{ $items->links() }}
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection

@@ -1,12 +1,3 @@
-<?php
-
-namespace MSJFramework\LaravelGenerator\Templates;
-
-class JavaScriptTemplate
-{
-    public static function generate(string $dmenu): string
-    {
-        return <<<'BLADE'
 <x-js />
 
 <script>
@@ -67,7 +58,3 @@ class JavaScriptTemplate
     @include('js.module.show')
 @endif
 --}}
-
-BLADE;
-    }
-}

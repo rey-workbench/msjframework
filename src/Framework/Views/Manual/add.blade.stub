@@ -1,1 +1,30 @@
+@extends('layouts.app')
 
+@section('content')
+    @include('layouts.navbars.auth.topnav', ['title' => $title_menu])
+    <div class="container-fluid py-4">
+        <div class="card">
+            <div class="card-header pb-0">
+                <h6>Add {{ $title_menu }}</h6>
+            </div>
+            <div class="card-body">
+                <form action="/{{ $url_menu }}" method="POST">
+                    @csrf
+                    <div class="row">
+{{formFields}}
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                            <a href="/{{ $url_menu }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endsection

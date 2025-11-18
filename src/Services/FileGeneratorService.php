@@ -2,11 +2,6 @@
 
 namespace MSJFramework\LaravelGenerator\Services;
 
-use MSJFramework\LaravelGenerator\Templates\ModelTemplate;
-use MSJFramework\LaravelGenerator\Templates\ControllerTemplate;
-use MSJFramework\LaravelGenerator\Templates\ViewTemplate;
-use MSJFramework\LaravelGenerator\Templates\JavaScriptTemplate;
-
 class FileGeneratorService
 {
     protected DatabaseIntrospectionService $db;
@@ -32,9 +27,39 @@ class FileGeneratorService
         $casts = $this->extractCasts($columns);
         $relationships = $this->db->detectRelationships($tableName);
         
-        $content = ModelTemplate::generate($modelName, $tableName, $fillable, $casts, $relationships);
-        $path = $this->getModelPath($modelName);
+        // Load stub
+        $stub = file_get_contents(__DIR__.'/../Framework/Models/models.stub');
         
+        // Build replacements
+        $fillableStr = "'" . implode("',\n        '", $fillable) . "'";
+        
+        $castsStr = '';
+        foreach ($casts as $field => $type) {
+            $castsStr .= "        '{$field}' => '{$type}',\n";
+        }
+        $castsStr = rtrim($castsStr, ",\n");
+        
+        $relationshipsStr = '';
+        foreach ($relationships as $rel) {
+            $relationshipsStr .= $this->buildRelationshipMethod($rel);
+        }
+        
+        // Replace placeholders
+        $content = str_replace([
+            '{{modelName}}',
+            '{{tableName}}',
+            '{{fillable}}',
+            '{{casts}}',
+            '{{relationships}}'
+        ], [
+            $modelName,
+            $tableName,
+            $fillableStr,
+            $castsStr,
+            $relationshipsStr
+        ], $stub);
+        
+        $path = $this->getModelPath($modelName);
         $this->ensureDirectoryExists(dirname($path));
         file_put_contents($path, $content);
         
@@ -49,9 +74,19 @@ class FileGeneratorService
         $controllerName = $this->getControllerName($url);
         $modelName = $this->getModelName($tableName);
         
-        $content = ControllerTemplate::generate($controllerName, $modelName);
-        $path = $this->getControllerPath($controllerName);
+        // Load stub
+        $stub = file_get_contents(__DIR__.'/../Framework/Controllers/Manual/controller.stub');
         
+        // Replace placeholders
+        $content = str_replace([
+            '{{controllerName}}',
+            '{{modelName}}'
+        ], [
+            $controllerName,
+            $modelName
+        ], $stub);
+        
+        $path = $this->getControllerPath($controllerName);
         file_put_contents($path, $content);
         
         return ['name' => $controllerName, 'path' => $path];
@@ -67,11 +102,17 @@ class FileGeneratorService
         
         $fields = $this->db->detectTableFields($tableName);
         
-        // Generate each view using templates
-        file_put_contents($viewPath . '/list.blade.php', ViewTemplate::generateList($fields));
-        file_put_contents($viewPath . '/add.blade.php', ViewTemplate::generateAdd($fields));
-        file_put_contents($viewPath . '/edit.blade.php', ViewTemplate::generateEdit($fields));
-        file_put_contents($viewPath . '/show.blade.php', ViewTemplate::generateShow($fields));
+        // Generate list view
+        $this->generateListView($viewPath, $fields);
+        
+        // Generate add view
+        $this->generateAddView($viewPath, $fields);
+        
+        // Generate edit view
+        $this->generateEditView($viewPath, $fields);
+        
+        // Generate show view
+        $this->generateShowView($viewPath, $fields);
         
         return [
             'list' => $viewPath . '/list.blade.php',
@@ -89,15 +130,148 @@ class FileGeneratorService
         $jsPath = $this->getJavaScriptPath();
         $this->ensureDirectoryExists($jsPath);
         
-        $content = JavaScriptTemplate::generate($dmenu);
-        $filePath = $jsPath . '/' . $dmenu . '.blade.php';
+        // Load stub
+        $stub = file_get_contents(__DIR__.'/../Framework/Views/JavaScript/js.blade.stub');
         
-        file_put_contents($filePath, $content);
+        $filePath = $jsPath . '/' . $dmenu . '.blade.php';
+        file_put_contents($filePath, $stub);
         
         return [
             'name' => $dmenu . '.blade.php',
             'path' => $filePath,
         ];
+    }
+
+    // =====================================================
+    // View Generation Helpers
+    // =====================================================
+
+    protected function generateListView(string $viewPath, array $fields): void
+    {
+        $stub = file_get_contents(__DIR__.'/../Framework/Views/Manual/list.blade.stub');
+        
+        $listFields = array_slice($fields, 0, min(6, count($fields)));
+        
+        $tableHeaders = '';
+        $tableRows = '';
+        foreach ($listFields as $field) {
+            $tableHeaders .= "                                <th>{$field['label']}</th>\n";
+            $tableRows .= "                                    <td>{{ \$item->{$field['field']} }}</td>\n";
+        }
+        
+        $content = str_replace([
+            '{{tableHeaders}}',
+            '{{tableRows}}'
+        ], [
+            $tableHeaders,
+            $tableRows
+        ], $stub);
+        
+        file_put_contents($viewPath . '/list.blade.php', $content);
+    }
+
+    protected function generateAddView(string $viewPath, array $fields): void
+    {
+        $stub = file_get_contents(__DIR__.'/../Framework/Views/Manual/add.blade.stub');
+        
+        $formFields = '';
+        foreach ($fields as $field) {
+            $formFields .= $this->buildFormField($field, 'add');
+        }
+        
+        $content = str_replace('{{formFields}}', $formFields, $stub);
+        file_put_contents($viewPath . '/add.blade.php', $content);
+    }
+
+    protected function generateEditView(string $viewPath, array $fields): void
+    {
+        $stub = file_get_contents(__DIR__.'/../Framework/Views/Manual/edit.blade.stub');
+        
+        $formFields = '';
+        foreach ($fields as $field) {
+            $formFields .= $this->buildFormField($field, 'edit');
+        }
+        
+        $content = str_replace('{{formFields}}', $formFields, $stub);
+        file_put_contents($viewPath . '/edit.blade.php', $content);
+    }
+
+    protected function generateShowView(string $viewPath, array $fields): void
+    {
+        $stub = file_get_contents(__DIR__.'/../Framework/Views/Manual/show.blade.stub');
+        
+        $detailFields = '';
+        foreach ($fields as $field) {
+            $detailFields .= <<<BLADE
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">{$field['label']}</label>
+                            <p class="form-control-static">{{ \$item->{$field['field']} ?? '-' }}</p>
+                        </div>
+
+BLADE;
+        }
+        
+        $content = str_replace('{{detailFields}}', $detailFields, $stub);
+        file_put_contents($viewPath . '/show.blade.php', $content);
+    }
+
+    protected function buildFormField(array $field, string $mode): string
+    {
+        $name = $field['field'];
+        $label = $field['label'];
+        $type = $field['type'];
+        $required = $field['required'] === '1' ? 'required' : '';
+        $value = $mode === 'edit' ? "{{ old('{$name}', \$item->{$name}) }}" : "{{ old('{$name}') }}";
+        
+        $colClass = $field['position'] === 'F' ? 'col-md-12' : 'col-md-6';
+        
+        $inputHtml = match($type) {
+            'text' => "<textarea name=\"{$name}\" class=\"form-control\" rows=\"4\" {$required}>{$value}</textarea>",
+            'date' => "<input type=\"date\" name=\"{$name}\" class=\"form-control\" value=\"{$value}\" {$required}>",
+            'email' => "<input type=\"email\" name=\"{$name}\" class=\"form-control\" value=\"{$value}\" {$required}>",
+            'number', 'currency' => "<input type=\"number\" name=\"{$name}\" class=\"form-control\" value=\"{$value}\" step=\"0.01\" {$required}>",
+            default => "<input type=\"text\" name=\"{$name}\" class=\"form-control\" value=\"{$value}\" {$required}>",
+        };
+        
+        return <<<BLADE
+                        <div class="{$colClass} mb-3">
+                            <label for="{$name}" class="form-label">{$label}</label>
+                            {$inputHtml}
+                            @error('{$name}')
+                                <div class="text-danger text-xs mt-1">{{ \$message }}</div>
+                            @enderror
+                        </div>
+
+BLADE;
+    }
+
+    protected function buildRelationshipMethod(array $rel): string
+    {
+        $methodName = $rel['name'];
+        $relatedModel = $rel['model'];
+        $foreignKey = $rel['foreign_key'];
+        
+        if ($rel['type'] === 'belongsTo') {
+            return <<<PHP
+
+    public function {$methodName}()
+    {
+        return \$this->belongsTo({$relatedModel}::class, '{$foreignKey}');
+    }
+
+PHP;
+        } elseif ($rel['type'] === 'hasMany') {
+            return <<<PHP
+
+    public function {$methodName}()
+    {
+        return \$this->hasMany({$relatedModel}::class, '{$foreignKey}');
+    }
+
+PHP;
+        }
+        
+        return '';
     }
 
     // =====================================================
