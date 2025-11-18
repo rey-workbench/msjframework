@@ -1,70 +1,62 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Templates\Helpers;
-
-use Illuminate\Support\Facades\App;
-
-class FormatHelperTemplate
-{
-    public static function getTemplate(): string
-    {
-        return <<<'PHP'
-<?php
-
 namespace App\Helpers;
+
+use Illuminate\Support\Facades\DB;
 
 class Format_Helper
 {
-    public function currency($amount): string
+    public function CurrencyFormat($nominal, $decimal = 0, $prefix = 'Rp.')
     {
-        return 'Rp ' . number_format($amount, 0, ',', '.');
+        return $prefix.' '.number_format($nominal, $decimal, ',', '.');
     }
 
-    public function date($date, string $format = 'd/m/Y'): string
+    public function DateFormat($date, $format = 'd/m/Y H:i')
     {
-        if (!$date) return '-';
-        
+        if (! $date) {
+            return '-';
+        }
+
         try {
-            return date($format, strtotime($date));
+            if (is_string($date)) {
+                $date = \Carbon\Carbon::parse($date);
+            }
+
+            return $date->format($format);
         } catch (\Exception $e) {
             return $date;
         }
     }
 
-    public function datetime($datetime, string $format = 'd/m/Y H:i'): string
+    public static function terbilang($angka): string
     {
-        if (!$datetime) return '-';
-        
-        try {
-            return date($format, strtotime($datetime));
-        } catch (\Exception $e) {
-            return $datetime;
+        $angka = abs($angka);
+        $bilangan = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+        $terbilang = '';
+
+        if ($angka < 12) {
+            $terbilang = ' '.$bilangan[$angka];
+        } elseif ($angka < 20) {
+            $terbilang = self::terbilang($angka - 10).' Belas';
+        } elseif ($angka < 100) {
+            $terbilang = self::terbilang($angka / 10).' Puluh'.self::terbilang($angka % 10);
+        } elseif ($angka < 200) {
+            $terbilang = ' Seratus'.self::terbilang($angka - 100);
+        } elseif ($angka < 1000) {
+            $terbilang = self::terbilang($angka / 100).' Ratus'.self::terbilang($angka % 100);
+        } elseif ($angka < 2000) {
+            $terbilang = ' Seribu'.self::terbilang($angka - 1000);
+        } elseif ($angka < 1000000) {
+            $terbilang = self::terbilang($angka / 1000).' Ribu'.self::terbilang($angka % 1000);
+        } elseif ($angka < 1000000000) {
+            $terbilang = self::terbilang($angka / 1000000).' Juta'.self::terbilang($angka % 1000000);
+        } elseif ($angka < 1000000000000) {
+            $terbilang = self::terbilang($angka / 1000000000).' Milyar'.self::terbilang(fmod($angka, 1000000000));
+        } elseif ($angka < 1000000000000000) {
+            $terbilang = self::terbilang($angka / 1000000000000).' Trilyun'.self::terbilang(fmod($angka, 1000000000000));
         }
-    }
 
-    public function number($number, int $decimals = 0): string
-    {
-        return number_format($number, $decimals, ',', '.');
-    }
-
-    public function percentage($value, int $decimals = 2): string
-    {
-        return number_format($value, $decimals, ',', '.') . '%';
-    }
-
-    public function truncate(string $text, int $length = 50): string
-    {
-        return strlen($text) > $length ? substr($text, 0, $length) . '...' : $text;
-    }
-
-    public function boolean($value): string
-    {
-        return $value ? 'Ya' : 'Tidak';
-    }
-
-    public function status($status): string
-    {
-        return $status == '1' ? 'Aktif' : 'Tidak Aktif';
+        return trim($terbilang).' Rupiah';
     }
 
     public function IDFormat($dmenu)
@@ -123,6 +115,7 @@ class Format_Helper
             ];
             $upd_sys_counter = DB::table('sys_counter')->where('character', $string)->update($data);
             if ($upd_sys_counter) {
+                // dd($sys_id, $generate_id, $counter, $zero, $string, 'update', $id->length);
                 return $generate_id;
             }
         } else {
@@ -133,27 +126,9 @@ class Format_Helper
             ];
             $ins_sys_counter = DB::table('sys_counter')->insert($data);
             if ($ins_sys_counter) {
+                // dd($sys_id, $generate_id, $counter, $zero, $string, 'insert', $id->length);
                 return $generate_id;
             }
-        }
-    }
-}
-
-PHP;
-    }
-
-    public static function createIfNotExists(): void
-    {
-        $helperPath = App::path('Helpers/Format_Helper.php');
-
-        if (! file_exists($helperPath)) {
-            // Create Helpers directory if not exists
-            $helperDir = dirname($helperPath);
-            if (! is_dir($helperDir)) {
-                mkdir($helperDir, 0755, true);
-            }
-
-            file_put_contents($helperPath, self::getTemplate());
         }
     }
 }

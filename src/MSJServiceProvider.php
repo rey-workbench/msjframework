@@ -2,61 +2,78 @@
 
 namespace MSJFramework\LaravelGenerator;
 
-use MSJFramework\LaravelGenerator\Console\Commands\Database\MakeMSJAuth;
-use MSJFramework\LaravelGenerator\Console\Commands\Database\MakeMSJDmenu;
-use MSJFramework\LaravelGenerator\Console\Commands\Database\MakeMSJGmenu;
-use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJController;
-use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJCrud;
-use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJModel;
-use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJModule;
-use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJSeeder;
-use MSJFramework\LaravelGenerator\Console\Commands\Generate\MakeMSJViews;
-use MSJFramework\LaravelGenerator\Console\Commands\MSJMake;
-use MSJFramework\LaravelGenerator\Console\Commands\Setup\MakeMSJInit;
-use MSJFramework\LaravelGenerator\Console\Commands\Setup\MakeMSJSave;
-use MSJFramework\LaravelGenerator\Support\WindowsPromptFallback;
+use MSJFramework\LaravelGenerator\Console\Commands\MSJInstallCommand;
+use MSJFramework\LaravelGenerator\Console\Commands\MSJMakeMenuCommand;
 use Illuminate\Support\ServiceProvider;
-use function config_path;
 
 class MSJServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Configure Laravel Prompts fallback for Windows native only
-        (new WindowsPromptFallback($this->app))->configure();
-
         if ($this->app->runningInConsole()) {
             $this->commands([
-                MSJMake::class,
-                MakeMSJInit::class,
-                MakeMSJSave::class,
-                MakeMSJModule::class,
-                MakeMSJCrud::class,
-                MakeMSJController::class,
-                MakeMSJModel::class,
-                MakeMSJViews::class,
-                MakeMSJSeeder::class,
-                MakeMSJAuth::class,
-                MakeMSJGmenu::class,
-                MakeMSJDmenu::class,
+                MSJInstallCommand::class,
+                MSJMakeMenuCommand::class,
             ]);
-        }
 
-        // Publish configuration file if needed
-        $this->publishes([
-            __DIR__.'/../config/msj-generator.php' => config_path('msj-generator.php'),
-        ], 'msj-generator-config');
+            // Publish migrations
+            $this->publishes([
+                __DIR__.'/Database/Migrations' => database_path('migrations'),
+            ], 'msj-migrations');
+
+            // Publish controllers
+            $this->publishes([
+                __DIR__.'/Controllers' => app_path('Http/Controllers'),
+            ], 'msj-controllers');
+
+            // Publish helpers
+            $this->publishes([
+                __DIR__.'/Helpers' => app_path('Helpers'),
+            ], 'msj-helpers');
+
+            // Publish models
+            $this->publishes([
+                __DIR__.'/Models' => app_path('Models'),
+            ], 'msj-models');
+
+            // Publish middleware
+            $this->publishes([
+                __DIR__.'/Middleware' => app_path('Http/Middleware'),
+            ], 'msj-middleware');
+
+            // Publish views
+            $this->publishes([
+                __DIR__.'/../stubs/views' => resource_path('views'),
+            ], 'msj-views');
+
+            // Publish routes
+            $this->publishes([
+                __DIR__.'/../stubs/routes/web.php' => base_path('routes/web.php'),
+            ], 'msj-routes');
+
+            // Publish config
+            $this->publishes([
+                __DIR__.'/../config/msj.php' => config_path('msj.php'),
+            ], 'msj-config');
+
+            // Publish seeders
+            $this->publishes([
+                __DIR__.'/Database/Seeders' => database_path('seeders'),
+            ], 'msj-seeders');
+
+            // Publish examples
+            $this->publishes([
+                __DIR__.'/../stubs/examples' => base_path('MSJ-Examples'),
+            ], 'msj-examples');
+        }
     }
 
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__.'/../config/msj-generator.php',
-            'msj-generator'
+            __DIR__.'/../config/msj.php',
+            'msj'
         );
-
-        // Load prompt helper functions
-        require_once __DIR__.'/Console/prompt_helpers.php';
     }
 }
 

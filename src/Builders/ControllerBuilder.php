@@ -1,0 +1,161 @@
+<?php
+
+namespace MSJFramework\LaravelGenerator\Templates;
+
+class ControllerTemplate
+{
+    public static function generate(string $controllerName, string $modelName): string
+    {
+        return <<<PHP
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\MSJBaseController;
+use App\Models\\{$modelName};
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class {$controllerName} extends MSJBaseController
+{
+    public function index(\$data)
+    {
+        \$this->init(\$data);
+
+        \$items = {$modelName}::orderBy('created_at', 'DESC')
+            ->paginate(config('msj.defaults.per_page', 10));
+
+        \$data['items'] = \$items;
+        \$this->log_insert('V', \$data['dmenu'], 'View ' . \$data['title_menu'], '1');
+
+        return view(\$data['url'], \$data);
+    }
+
+    public function add(\$data)
+    {
+        \$this->init(\$data);
+
+        if (\$data['authorize']->add != '1') {
+            return \$this->error('Not Authorized to Add');
+        }
+
+        return view(\$data['url'], \$data);
+    }
+
+    public function store(Request \$request, \$data)
+    {
+        \$this->init(\$data);
+
+        if (\$data['authorize']->add != '1') {
+            return \$this->error('Not Authorized to Add');
+        }
+
+        \$validated = \$request->validate([
+            // Add your validation rules here
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            \$item = {$modelName}::create(array_merge(\$validated, [
+                'user_create' => session('username'),
+            ]));
+
+            DB::commit();
+            \$this->log_insert('C', \$data['dmenu'], 'Create ' . \$item->id, '1');
+
+            return \$this->success('Data created successfully', '/' . \$data['url_menu']);
+        } catch (\Exception \$e) {
+            DB::rollback();
+            return \$this->error('Failed to create: ' . \$e->getMessage());
+        }
+    }
+
+    public function show(\$data)
+    {
+        \$this->init(\$data);
+        
+        \$id = \$this->decrypt(\$data['idencrypt']);
+        \$item = {$modelName}::findOrFail(\$id);
+
+        \$data['item'] = \$item;
+        return view(\$data['url'], \$data);
+    }
+
+    public function edit(\$data)
+    {
+        \$this->init(\$data);
+        
+        if (\$data['authorize']->edit != '1') {
+            return \$this->error('Not Authorized to Edit');
+        }
+
+        \$id = \$this->decrypt(\$data['idencrypt']);
+        \$item = {$modelName}::findOrFail(\$id);
+
+        \$data['item'] = \$item;
+        return view(\$data['url'], \$data);
+    }
+
+    public function update(Request \$request, \$data)
+    {
+        \$this->init(\$data);
+        
+        if (\$data['authorize']->edit != '1') {
+            return \$this->error('Not Authorized to Edit');
+        }
+
+        \$id = \$this->decrypt(\$data['idencrypt']);
+        \$item = {$modelName}::findOrFail(\$id);
+
+        \$validated = \$request->validate([
+            // Add your validation rules here
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            \$item->update(array_merge(\$validated, [
+                'user_update' => session('username'),
+            ]));
+
+            DB::commit();
+            \$this->log_insert('U', \$data['dmenu'], 'Update ' . \$item->id, '1');
+
+            return \$this->success('Data updated successfully', '/' . \$data['url_menu']);
+        } catch (\Exception \$e) {
+            DB::rollback();
+            return \$this->error('Failed to update: ' . \$e->getMessage());
+        }
+    }
+
+    public function destroy(\$data)
+    {
+        \$this->init(\$data);
+        
+        if (\$data['authorize']->delete != '1') {
+            return \$this->error('Not Authorized to Delete');
+        }
+
+        \$id = \$this->decrypt(\$data['idencrypt']);
+        \$item = {$modelName}::findOrFail(\$id);
+
+        try {
+            DB::beginTransaction();
+
+            \$item->delete();
+
+            DB::commit();
+            \$this->log_insert('D', \$data['dmenu'], 'Delete ' . \$item->id, '1');
+
+            return \$this->success('Data deleted successfully');
+        } catch (\Exception \$e) {
+            DB::rollback();
+            return \$this->error('Failed to delete: ' . \$e->getMessage());
+        }
+    }
+}
+
+PHP;
+    }
+}
