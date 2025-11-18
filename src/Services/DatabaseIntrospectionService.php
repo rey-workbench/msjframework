@@ -1,6 +1,6 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Services;
+namespace MSJFramework\Services;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;

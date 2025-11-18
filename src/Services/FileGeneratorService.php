@@ -1,6 +1,6 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Services;
+namespace MSJFramework\Services;
 
 class FileGeneratorService
 {

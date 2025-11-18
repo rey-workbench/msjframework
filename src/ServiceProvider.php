@@ -1,9 +1,9 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator;
+namespace MSJFramework;
 
-use MSJFramework\LaravelGenerator\Console\Commands\MSJInstallCommand;
-use MSJFramework\LaravelGenerator\Console\Commands\MSJMakeMenuCommand;
+use MSJFramework\Console\Commands\MSJInstallCommand;
+use MSJFramework\Console\Commands\MSJMakeMenuCommand;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 
 class ServiceProvider extends BaseServiceProvider

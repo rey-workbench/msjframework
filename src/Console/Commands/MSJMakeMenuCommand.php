@@ -1,11 +1,11 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Console\Commands;
+namespace MSJFramework\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use MSJFramework\LaravelGenerator\Services\DatabaseIntrospectionService;
-use MSJFramework\LaravelGenerator\Services\FileGeneratorService;
+use MSJFramework\Services\DatabaseIntrospectionService;
+use MSJFramework\Services\FileGeneratorService;
 use function Laravel\Prompts\text;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\multiselect;

@@ -1,6 +1,6 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Services;
+namespace MSJFramework\Services;
 
 use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Process\Process;
@@ -23,7 +23,7 @@ class PublishService
     {
         $params = array_merge([
             '--tag' => $tag,
-            '--provider' => 'MSJFramework\LaravelGenerator\MSJServiceProvider',
+            '--provider' => 'MSJFramework\MSJServiceProvider',
         ], $options);
 
         // Windows native: use Symfony Process

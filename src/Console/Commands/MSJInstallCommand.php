@@ -1,9 +1,9 @@
 <?php
 
-namespace MSJFramework\LaravelGenerator\Console\Commands;
+namespace MSJFramework\Console\Commands;
 
 use Illuminate\Console\Command;
-use MSJFramework\LaravelGenerator\Services\PublishService;
+use MSJFramework\Services\PublishService;
 
 class MSJInstallCommand extends Command
 {

@@ -49,18 +49,18 @@
     },
     "autoload": {
         "psr-4": {
-            "MSJFramework\\LaravelGenerator\\": "src/"
+            "MSJFramework\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "MSJFramework\\LaravelGenerator\\Tests\\": "tests/"
+            "MSJFramework\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "MSJFramework\\LaravelGenerator\\MSJServiceProvider"
+                "MSJFramework\\ServiceProvider"
             ],
             "aliases": {}
         }
