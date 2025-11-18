@@ -19,7 +19,6 @@ class DatabaseIntrospectionService
             
             return collect($tables)
                 ->pluck($key)
-                ->filter(fn($table) => !str_starts_with($table, 'sys_'))
                 ->mapWithKeys(fn($table) => [$table => $table])
                 ->toArray();
         } catch (\Exception $e) {

@@ -17,6 +17,7 @@ use function Laravel\Prompts\warning;
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\note;
 use function Laravel\Prompts\table;
+use function Laravel\Prompts\search;
 
 class MSJMakeMenuCommand extends Command
 {
@@ -98,6 +99,7 @@ class MSJMakeMenuCommand extends Command
                 'report' => 'Report - Filter and result (auto-generated)',
                 'manual' => 'Manual - Custom implementation (full control)',
             ],
+            search: true,
             hint: 'Auto layouts generate UI from metadata, Manual gives full control'
         );
 
@@ -122,6 +124,7 @@ class MSJMakeMenuCommand extends Command
             $this->menuData['gmenu'] = select(
                 label: 'Select group menu',
                 options: $existingGmenus,
+                search: true,
             );
         } else {
             $this->menuData['gmenu'] = text(
@@ -188,6 +191,7 @@ class MSJMakeMenuCommand extends Command
                 label: 'Select Database Table',
                 options: $availableTables,
                 scroll: 15,
+                search: true,
                 hint: 'Choose from available tables in database'
             );
         } else {
@@ -240,6 +244,7 @@ class MSJMakeMenuCommand extends Command
             label: 'Select roles with access',
             options: $roles,
             required: true,
+            search: true,
             hint: 'Use space to select, enter to confirm'
         );
 
@@ -290,6 +295,7 @@ class MSJMakeMenuCommand extends Command
             $parentDmenu = select(
                 label: 'Select parent sublink menu',
                 options: $existingSublinks,
+                search: true,
             );
             
             $parent = DB::table('sys_dmenu')->where('dmenu', $parentDmenu)->first();
@@ -357,6 +363,7 @@ class MSJMakeMenuCommand extends Command
                         $f['field'] => "{$f['field']} ({$f['type']})"
                     ])->toArray(),
                     required: true,
+                    search: true,
                     hint: 'Space to select, Enter to confirm'
                 );
                 
@@ -419,13 +426,15 @@ class MSJMakeMenuCommand extends Command
                         'search' => 'Search Modal',
                         'hidden' => 'Hidden Field',
                     ],
-                    default: $field['type']
+                    default: $field['type'],
+                    search: true,
                 );
                 
                 $field['position'] = select(
                     label: 'Position',
                     options: ['L' => 'Left', 'R' => 'Right', 'F' => 'Full Width'],
-                    default: $field['position']
+                    default: $field['position'],
+                    search: true,
                 );
                 
                 $field['required'] = confirm('Required?', $field['required'] === '1') ? '1' : '0';
@@ -461,11 +470,11 @@ class MSJMakeMenuCommand extends Command
                     'char' => 'Text (short)', 'string' => 'Text (long)', 'text' => 'Textarea',
                     'number' => 'Number', 'currency' => 'Currency', 'date' => 'Date',
                     'email' => 'Email', 'password' => 'Password', 'file' => 'File Upload',
-                    'image' => 'Image Upload', 'enum' => 'Select/Dropdown',
+                    'image' => 'Image Upload', 'enum' => 'Dropdown (enum)', 'radio' => 'Radio',
                     'search' => 'Search Modal', 'hidden' => 'Hidden Field',
-                ]),
+                ], search: true),
                 'length' => (int) text(label: 'Max Length', default: '100', required: true),
-                'position' => select(label: 'Position', options: ['L' => 'Left Column', 'R' => 'Right Column', 'F' => 'Full Width']),
+                'position' => select(label: 'Position', options: ['L' => 'Left Column', 'R' => 'Right Column', 'F' => 'Full Width'], search: true),
                 'required' => confirm('Required field?', true) ? '1' : '0',
                 'readonly' => confirm('Read-only?', false) ? '1' : '0',
                 'idenum' => '',
@@ -508,7 +517,9 @@ class MSJMakeMenuCommand extends Command
                     'bln' => 'Month (01-12)',
                     'tgl' => 'Date (01-31)',
                     'cnt' => 'Counter (auto-increment)',
-                ]
+                ],
+                search: true,
+                required: true
             );
 
             if ($rule['source'] === 'ext') {
