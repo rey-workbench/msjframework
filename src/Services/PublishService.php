@@ -7,13 +7,11 @@ use Symfony\Component\Process\Process;
 
 class PublishService
 {
-    protected bool $isWindows;
-    protected bool $isWSL;
+    protected PlatformDetectorService $platform;
 
     public function __construct()
     {
-        $this->isWindows = PHP_OS_FAMILY === 'Windows';
-        $this->isWSL = $this->detectWSL();
+        $this->platform = new PlatformDetectorService();
     }
 
     /**
@@ -27,30 +25,13 @@ class PublishService
         ], $options);
 
         // Windows native: use Symfony Process
-        if ($this->isWindows && !$this->isWSL) {
+        if ($this->platform->isWindowsNonWSL()) {
             return $this->executeViaSymfonyProcess('vendor:publish', $params);
         }
 
         // WSL, Linux, Mac: use Artisan directly
         Artisan::call('vendor:publish', $params);
         return true;
-    }
-
-    /**
-     * Detect if running on WSL
-     */
-    protected function detectWSL(): bool
-    {
-        if (PHP_OS_FAMILY !== 'Linux') {
-            return false;
-        }
-
-        if (file_exists('/proc/version')) {
-            $version = file_get_contents('/proc/version');
-            return stripos($version, 'microsoft') !== false || stripos($version, 'WSL') !== false;
-        }
-
-        return false;
     }
 
     /**
@@ -83,24 +64,15 @@ class PublishService
      */
     public function getEnvironmentInfo(): array
     {
-        if ($this->isWSL) {
-            return [
-                'type' => 'WSL',
-                'icon' => '🐧',
-                'executor' => 'Laravel Artisan',
-            ];
-        } elseif ($this->isWindows) {
-            return [
-                'type' => 'Windows Native',
-                'icon' => '🪟',
-                'executor' => 'Symfony Process',
-            ];
+        $envInfo = $this->platform->getEnvironmentInfo();
+        
+        // Add executor information
+        if ($this->platform->isWindowsNonWSL()) {
+            $envInfo['executor'] = 'Symfony Process';
         } else {
-            return [
-                'type' => 'Linux/Mac',
-                'icon' => '🐧',
-                'executor' => 'Laravel Artisan',
-            ];
+            $envInfo['executor'] = 'Laravel Artisan';
         }
+        
+        return $envInfo;
     }
 }

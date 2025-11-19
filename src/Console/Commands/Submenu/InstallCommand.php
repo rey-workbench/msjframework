@@ -1,11 +1,11 @@
 <?php
 
-namespace MSJFramework\Console\Commands;
+namespace MSJFramework\Console\Commands\Submenu;
 
 use Illuminate\Console\Command;
 use MSJFramework\Services\PublishService;
 
-class MSJInstallCommand extends Command
+class InstallCommand extends Command
 {
     protected PublishService $publisher;
     protected $signature = 'msj:install 

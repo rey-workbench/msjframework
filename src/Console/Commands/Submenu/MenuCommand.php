@@ -1,6 +1,6 @@
 <?php
 
-namespace MSJFramework\Console\Commands;
+namespace MSJFramework\Console\Commands\Submenu;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -8,6 +8,7 @@ use MSJFramework\Console\Commands\Traits\HandlesTableConfiguration;
 use MSJFramework\Console\Commands\Traits\HandlesMenuCreation;
 use MSJFramework\Services\DatabaseIntrospectionService;
 use MSJFramework\Services\FileGeneratorService;
+use MSJFramework\Services\PlatformDetectorService;
 use function Laravel\Prompts\text;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\multiselect;
@@ -19,15 +20,16 @@ use function Laravel\Prompts\note;
 use function Laravel\Prompts\table;
 use function Laravel\Prompts\search;
 
-class MSJMakeMenuCommand extends Command
+class MenuCommand extends Command
 {
     use HandlesTableConfiguration;
     use HandlesMenuCreation;
-    protected $signature = 'msj:make menu';
+    protected $signature = 'msj:make:menu';
     protected $description = 'Membuat menu baru dengan panduan interaktif';
 
     protected DatabaseIntrospectionService $db;
     protected FileGeneratorService $generator;
+    protected PlatformDetectorService $platform;
     
     protected array $menuData = [];
     protected array $tableFields = [];
@@ -37,6 +39,7 @@ class MSJMakeMenuCommand extends Command
         parent::__construct();
         $this->db = new DatabaseIntrospectionService();
         $this->generator = new FileGeneratorService($this->db);
+        $this->platform = new PlatformDetectorService();
     }
 
     public function handle(): int
@@ -84,34 +87,52 @@ class MSJMakeMenuCommand extends Command
         $this->newLine();
     }
 
+    /**
+     * Smart selection that uses appropriate UI based on OS
+     * Uses PlatformDetector to determine the best prompt type
+     */
+    protected function smartSelect(string $label, array $options, string $placeholder = '', string $hint = ''): string
+    {
+        // Use select() for Windows native - displays numbered list
+        if ($this->platform->isWindowsNonWSL()) {
+            return select(
+                label: $label,
+                options: $options,
+                hint: $hint ?: 'Gunakan panah ↑↓ untuk navigasi atau ketik nomor'
+            );
+        }
+
+        // Use search() for Unix/WSL/Mac - better interactive experience
+        return search(
+            label: $label,
+            options: fn (string $value) => strlen($value) > 0
+                ? collect($options)->filter(fn($optLabel, $key) => 
+                    str_contains(strtolower($optLabel), strtolower($value)) ||
+                    str_contains(strtolower($key), strtolower($value))
+                )->all()
+                : $options,
+            placeholder: $placeholder ?: 'Mulai ketik untuk mencari...',
+            hint: $hint
+        );
+    }
+
     protected function selectMenuType(): void
     {
         note('Langkah 1: Pilih Tipe Layout Menu');
 
-        $this->menuData['layout'] = search(
+        $layoutOptions = [
+            'master' => 'Master - CRUD sederhana (otomatis)',
+            'transc' => 'Transaksi - Header-Detail (otomatis)',
+            'system' => 'Sistem - Form konfigurasi (otomatis)',
+            'standr' => 'Standar - CRUD standar (otomatis)',
+            'sublnk' => 'Sublink - Relasi antar tabel (otomatis)',
+            'report' => 'Laporan - Filter dan hasil (otomatis)',
+            'manual' => 'Manual - Implementasi kustom (penuh)',
+        ];
+
+        $this->menuData['layout'] = $this->smartSelect(
             label: 'Pilih tipe layout',
-            options: fn (string $value) => strlen($value) > 0
-                ? collect([
-                    'master' => 'Master - CRUD sederhana (otomatis)',
-                    'transc' => 'Transaksi - Header-Detail (otomatis)',
-                    'system' => 'Sistem - Form konfigurasi (otomatis)',
-                    'standr' => 'Standar - CRUD standar (otomatis)',
-                    'sublnk' => 'Sublink - Relasi antar tabel (otomatis)',
-                    'report' => 'Laporan - Filter dan hasil (otomatis)',
-                    'manual' => 'Manual - Implementasi kustom (penuh)',
-                ])->filter(fn($label, $key) => 
-                    str_contains(strtolower($label), strtolower($value)) ||
-                    str_contains(strtolower($key), strtolower($value))
-                )->all()
-                : [
-                    'master' => 'Master - CRUD sederhana (otomatis)',
-                    'transc' => 'Transaksi - Header-Detail (otomatis)',
-                    'system' => 'Sistem - Form konfigurasi (otomatis)',
-                    'standr' => 'Standar - CRUD standar (otomatis)',
-                    'sublnk' => 'Sublink - Relasi antar tabel (otomatis)',
-                    'report' => 'Laporan - Filter dan hasil (otomatis)',
-                    'manual' => 'Manual - Implementasi kustom (penuh)',
-                ],
+            options: $layoutOptions,
             placeholder: 'Mulai ketik untuk mencari...',
             hint: 'Layout otomatis membuat UI dari metadata, Manual memberi kontrol penuh'
         );
@@ -134,9 +155,9 @@ class MSJMakeMenuCommand extends Command
         $useExisting = confirm('Gunakan menu grup yang sudah ada?', false);
 
         if ($useExisting && !empty($existingGmenus)) {
-            $this->menuData['gmenu'] = search(
+            $this->menuData['gmenu'] = $this->smartSelect(
                 label: 'Pilih menu grup',
-                options: fn($value) => $this->filterOptions($existingGmenus, $value),
+                options: $existingGmenus,
                 placeholder: 'Mulai ketik untuk mencari...'
             );
         } else {
@@ -200,9 +221,9 @@ class MSJMakeMenuCommand extends Command
         $availableTables = $this->db->getAvailableTables();
         
         if (!empty($availableTables)) {
-            $this->menuData['table'] = search(
+            $this->menuData['table'] = $this->smartSelect(
                 label: 'Pilih tabel database',
-                options: fn($value) => $this->filterOptions($availableTables, $value),
+                options: $availableTables,
                 placeholder: 'Mulai ketik untuk mencari...',
                 hint: 'Pilih dari tabel yang tersedia di database'
             );
@@ -303,9 +324,9 @@ class MSJMakeMenuCommand extends Command
         }
 
         if ($useExisting && !empty($existingSublinks)) {
-            $parentDmenu = search(
+            $parentDmenu = $this->smartSelect(
                 label: 'Pilih menu parent sublink',
-                options: fn($value) => $this->filterOptions($existingSublinks, $value),
+                options: $existingSublinks,
                 placeholder: 'Mulai ketik untuk mencari...'
             );
             
@@ -608,21 +629,6 @@ Exception $e) {
         info('2. Buka menu baru yang dibuat');
         info('3. Uji operasi CRUD');
         $this->newLine();
-    }
-
-    /**
-     * Filter options for search prompt
-     */
-    protected function filterOptions(array $options, string $value): array
-    {
-        if (strlen($value) === 0) {
-            return $options;
-        }
-
-        return collect($options)->filter(function($label, $key) use ($value) {
-            return str_contains(strtolower($label), strtolower($value)) ||
-                   str_contains(strtolower($key), strtolower($value));
-        })->all();
     }
 
     protected function validateGmenuId($value): ?string
