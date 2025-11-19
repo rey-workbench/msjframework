@@ -457,8 +457,6 @@ class MSJMakeMenuCommand extends Command
         info('✓ Penyesuaian field selesai');
         $this->newLine();
     }
-        $this->newLine();
-    }
 
     protected function configureIDGeneration(): void
     {
