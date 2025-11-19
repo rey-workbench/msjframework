@@ -3,6 +3,7 @@
 namespace MSJFramework\Console\Commands;
 
 use Illuminate\Console\Command;
+use MSJFramework\Console\Commands\Traits\HandleView;
 use MSJFramework\Services\PlatformDetectorService;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\search;
@@ -11,6 +12,7 @@ use function Laravel\Prompts\note;
 
 class MainCommand extends Command
 {
+    use HandleView;
     protected $signature = 'msj';
     protected $description = 'MSJ Framework - Command Hub';
     
@@ -37,9 +39,7 @@ class MainCommand extends Command
     protected function displayBanner(): void
     {
         $this->newLine();
-        info('╔═══════════════════════════════════════════╗');
-        info('║         MSJ Framework - Hub Menu         ║');
-        info('╚═══════════════════════════════════════════╝');
+        $this->displayAsciiHeader();
         $this->newLine();
     }
 

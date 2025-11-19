@@ -82,7 +82,7 @@ class MenuCommand extends Command
     {
         $this->newLine();
         info('╔═══════════════════════════════════════════╗');
-        info('║  MSJ Framework - Panduan Pembuatan Menu  ║');
+        info('║  MSJ Framework - Panduan Pembuatan Menu   ║');
         info('╚═══════════════════════════════════════════╝');
         $this->newLine();
     }
