@@ -66,7 +66,10 @@ trait HandlesTableMetadata
                     $keyList = $primaryKeys->pluck('field')->implode(', ');
                     if ($primaryKeys->count() > 1) {
                         info("✓ Composite Primary Key: {$keyList}");
-                        warning("⚠ Tabel ini punya composite key. Gunakan layout SYSTEM untuk hasil terbaik!");
+                        // Only warn if NOT using system layout
+                        if ($this->menuData['layout'] !== 'system') {
+                            warning("⚠ Tabel ini punya composite key. Gunakan layout SYSTEM untuk hasil terbaik!");
+                        }
                     } else {
                         info("✓ Primary Key: {$keyList}");
                     }
@@ -241,6 +244,23 @@ trait HandlesTableMetadata
             return;
         }
 
+        // Warn user about manual fields for existing tables
+        warning('⚠ PERHATIAN: Field manual hanya untuk edit metadata, BUKAN menambah kolom ke database!');
+        info('Untuk menambah kolom baru, gunakan migration: php artisan make:migration');
+        $this->newLine();
+
+        // Get all fields from database
+        $dbFields = $this->db->detectTableFields($this->menuData['table']);
+        $dbFieldNames = collect($dbFields)->pluck('field');
+        $configuredFieldNames = collect($this->tableFields)->pluck('field');
+        
+        // Show unconfigured fields if any
+        $unconfigured = $dbFieldNames->diff($configuredFieldNames);
+        if ($unconfigured->isNotEmpty()) {
+            info('💡 Field di database yang belum dikonfigurasi: ' . $unconfigured->implode(', '));
+            $this->newLine();
+        }
+
         do {
             $this->newLine();
             note('Konfigurasi Field Manual');
@@ -251,8 +271,15 @@ trait HandlesTableMetadata
                 required: true,
                 validate: fn($v) => preg_match('/^[a-z_][a-z0-9_]*$/', $v) ? null : 'Gunakan lowercase dan underscore'
             );
+            
+            if (!$dbFieldNames->contains($fieldName)) {
+                warning("⚠ Field '{$fieldName}' TIDAK ADA di tabel database '{$this->menuData['table']}'!");
+                if (!confirm('Lanjutkan? (View akan error jika field tidak ada di database)', false)) {
+                    continue;
+                }
+            }
 
-            // Check if field already exists
+            // Check if field already exists in metadata
             $existingIndex = collect($this->tableFields)->search(fn($f) => $f['field'] === $fieldName);
             
             if ($existingIndex !== false) {

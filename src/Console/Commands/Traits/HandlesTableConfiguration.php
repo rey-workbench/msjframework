@@ -154,6 +154,8 @@ trait HandlesTableConfiguration
 
     /**
      * System Layout - System tables with composite primary keys
+     * Pattern: Primary pertama → List kiri (position 1)
+     *          Field lainnya → Detail kanan (position 2)
      */
     protected function insertSystemTableConfig(): void
     {
@@ -161,13 +163,35 @@ trait HandlesTableConfiguration
             return;
         }
 
+        // Find first primary key for left panel (selector)
+        $firstPrimaryField = collect($this->tableFields)
+            ->where('primary', '1')
+            ->first();
+
         foreach ($this->tableFields as $field) {
-            $this->insertFormField($field, [
-                'filter' => '1',
-                'list' => '1',
-                'show' => '1',
-                'position' => '2', // System layout typically uses position 2
-            ]);
+            // First primary key goes to LEFT panel (list/selector)
+            if ($firstPrimaryField && $field['field'] === $firstPrimaryField['field']) {
+                // Ensure query exists for left panel
+                if (empty($field['query'])) {
+                    warning("⚠ Field '{$field['field']}' di panel kiri membutuhkan QUERY untuk populate list!");
+                    info("Contoh: SELECT {$field['field']}, name FROM {$this->menuData['table']}");
+                }
+                
+                $this->insertFormField($field, [
+                    'filter' => '1',  // Enable filter di kiri
+                    'list' => '1',    // Tampil di list kiri
+                    'show' => '1',    // Juga di detail kanan
+                    'position' => '1', // Position 1 = kiri
+                ]);
+            } else {
+                // Other fields (including other primary keys) go to RIGHT panel (detail)
+                $this->insertFormField($field, [
+                    'filter' => '1',  // Enable filter
+                    'list' => '1',    // Muncul di detail kanan
+                    'show' => '1',    // Show di detail
+                    'position' => '2', // Position 2 = kanan
+                ]);
+            }
         }
     }
 
