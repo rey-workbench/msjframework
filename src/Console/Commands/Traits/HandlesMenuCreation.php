@@ -59,21 +59,29 @@ trait HandlesMenuCreation
             return;
         }
 
-        DB::table('sys_dmenu')->insert([
-            'dmenu' => $this->menuData['parent_dmenu'],
-            'gmenu' => $this->menuData['gmenu'],
-            'name' => $this->menuData['parent_name'],
-            'url' => strtolower($this->menuData['parent_dmenu']),
-            'tabel' => '-',
-            'layout' => 'sublnk',
-            'sub' => $this->menuData['parent_link'],
-            'show' => '0',
-            'urut' => $this->menuData['dmenu_urut'] - 1,
-            'isactive' => '1',
-            'user_create' => 'system',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // Check if parent menu already exists
+        $exists = DB::table('sys_dmenu')
+            ->where('dmenu', $this->menuData['parent_dmenu'])
+            ->exists();
+        
+        // Only insert if not exists
+        if (!$exists) {
+            DB::table('sys_dmenu')->insert([
+                'dmenu' => $this->menuData['parent_dmenu'],
+                'gmenu' => $this->menuData['gmenu'],
+                'name' => $this->menuData['parent_name'],
+                'url' => strtolower($this->menuData['parent_dmenu']),
+                'tabel' => '-',
+                'layout' => 'sublnk',
+                'sub' => $this->menuData['parent_link'],
+                'show' => '0',
+                'urut' => $this->menuData['dmenu_urut'] - 1,
+                'isactive' => '1',
+                'user_create' => 'system',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     /**
@@ -81,13 +89,21 @@ trait HandlesMenuCreation
      */
     protected function createDetailMenu(): void
     {
+        // Untuk layout sublnk, menu yang dibuat adalah menu DATA yang akan muncul di list sublink
+        // Layout aktual untuk menu data ini adalah 'standr' atau 'master', bukan 'sublnk'
+        $actualLayout = $this->menuData['layout'];
+        if ($actualLayout === 'sublnk') {
+            // Default ke standr untuk menu data di sublink
+            $actualLayout = 'standr';
+        }
+
         DB::table('sys_dmenu')->insert([
             'dmenu' => $this->menuData['dmenu'],
             'gmenu' => $this->menuData['gmenu'],
             'name' => $this->menuData['dmenu_name'],
             'url' => $this->menuData['url'],
             'tabel' => $this->menuData['table'],
-            'layout' => $this->menuData['layout'],
+            'layout' => $actualLayout,
             'where' => $this->menuData['where_clause'],
             'sub' => $this->menuData['parent_link'] ?? null,
             'js' => $this->menuData['js_menu'],
@@ -108,6 +124,7 @@ trait HandlesMenuCreation
             return;
         }
 
+        // Authorization untuk menu data
         foreach ($this->menuData['auth_roles'] as $roleId => $permissions) {
             DB::table('sys_auth')->insert([
                 'gmenu' => $this->menuData['gmenu'],
@@ -127,6 +144,42 @@ trait HandlesMenuCreation
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+        }
+
+        // Authorization untuk parent sublink (jika create_parent = true atau add_parent_auth = true)
+        if ((isset($this->menuData['create_parent']) && $this->menuData['create_parent']) || 
+            (isset($this->menuData['add_parent_auth']) && $this->menuData['add_parent_auth'])) {
+            
+            foreach ($this->menuData['auth_roles'] as $roleId => $permissions) {
+                // Check if authorization already exists for this role
+                $existingAuth = DB::table('sys_auth')
+                    ->where('gmenu', $this->menuData['gmenu'])
+                    ->where('dmenu', $this->menuData['parent_dmenu'])
+                    ->where('idroles', $roleId)
+                    ->first();
+                
+                // Only insert if not exists
+                if (!$existingAuth) {
+                    DB::table('sys_auth')->insert([
+                        'gmenu' => $this->menuData['gmenu'],
+                        'dmenu' => $this->menuData['parent_dmenu'],
+                        'idroles' => $roleId,
+                        'value' => $permissions['value'],
+                        'add' => $permissions['add'],
+                        'edit' => $permissions['edit'],
+                        'delete' => $permissions['delete'],
+                        'approval' => $permissions['approval'],
+                        'print' => $permissions['print'],
+                        'excel' => $permissions['excel'],
+                        'pdf' => $permissions['pdf'],
+                        'rules' => $permissions['rules'],
+                        'isactive' => '1',
+                        'user_create' => 'system',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
         }
     }
 

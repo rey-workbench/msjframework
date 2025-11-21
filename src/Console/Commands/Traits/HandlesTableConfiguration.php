@@ -180,54 +180,64 @@ trait HandlesTableConfiguration
             return;
         }
 
-        // First row: query definition for header data
-        DB::table('sys_table')->insert([
-            'gmenu' => $this->menuData['gmenu'],
-            'dmenu' => $this->menuData['dmenu'],
-            'urut' => 1,
-            'field' => 'query',
-            'alias' => 'Sublink Query',
-            'type' => 'sublink',
-            'length' => 0,
-            'decimals' => '0',
-            'default' => '',
-            'validate' => '',
-            'primary' => '0',
-            'generateid' => '',
-            'filter' => '0',
-            'list' => '1',
-            'show' => '1',
-            'query' => $this->generateSublinkQuery(),
-            'class' => '',
-            'sub' => '',
-            'link' => '',
-            'note' => '',
-            'position' => '0',
-            'isactive' => '1',
-            'user_create' => 'system',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // Insert konfigurasi untuk parent sublink (jika create_parent = true)
+        if (isset($this->menuData['create_parent']) && $this->menuData['create_parent']) {
+            $this->insertSublinkParentTableConfig();
+        }
 
-        // Subsequent rows: form fields with position-based grouping
-        $urut = 2;
+        // Insert konfigurasi untuk menu DATA (menggunakan konfigurasi standar)
+        // Menu data ini akan muncul di list kiri sublink
         foreach ($this->tableFields as $field) {
-            // Determine position based on field characteristics
-            $position = '0';
-            if ($field['primary'] === '1') {
-                $position = '1'; // Primary key goes to header
-            } elseif (!empty($field['link'])) {
-                $position = '1'; // Linked field goes to header
-            } else {
-                $position = '2'; // Detail fields
-            }
-
-            $this->insertFormField(array_merge($field, ['urut' => $urut++]), [
+            $this->insertFormField($field, [
                 'filter' => '1',
                 'list' => '1',
                 'show' => '1',
-                'position' => $position,
                 'link' => $field['link'] ?? '',
+            ]);
+        }
+    }
+
+    /**
+     * Insert table config for sublink parent menu
+     */
+    protected function insertSublinkParentTableConfig(): void
+    {
+        // Check if config already exists
+        $exists = DB::table('sys_table')
+            ->where('gmenu', $this->menuData['gmenu'])
+            ->where('dmenu', $this->menuData['parent_dmenu'])
+            ->where('urut', 1)
+            ->exists();
+        
+        // Only insert if not exists
+        if (!$exists) {
+            // Konfigurasi query untuk parent sublink
+            DB::table('sys_table')->insert([
+                'gmenu' => $this->menuData['gmenu'],
+                'dmenu' => $this->menuData['parent_dmenu'],
+                'urut' => 1,
+                'field' => 'query',
+                'alias' => 'Sublink Query',
+                'type' => 'report',
+                'length' => 0,
+                'decimals' => '0',
+                'default' => '',
+                'validate' => '',
+                'primary' => '0',
+                'generateid' => '',
+                'filter' => '0',
+                'list' => '1',
+                'show' => '1',
+                'query' => $this->generateSublinkQuery(),
+                'class' => '',
+                'sub' => '',
+                'link' => '',
+                'note' => '',
+                'position' => '1',
+                'isactive' => '1',
+                'user_create' => 'system',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }
@@ -397,25 +407,14 @@ trait HandlesTableConfiguration
     }
 
     /**
-     * Generate sublink query (header data only)
+     * Generate sublink query (list sub-menu from sys_dmenu)
      */
     protected function generateSublinkQuery(): string
     {
-        $table = $this->menuData['table'];
+        $parentLink = $this->menuData['parent_link'] ?? $this->menuData['dmenu'];
         
-        // Get header fields (position = 1) and primary key fields
-        $headerFields = collect($this->tableFields)
-            ->filter(function($field) {
-                return $field['primary'] === '1' || ($field['position'] ?? 'L') === 'H';
-            })
-            ->pluck('field')
-            ->implode(', ');
-        
-        if (empty($headerFields)) {
-            $headerFields = '*';
-        }
-        
-        return "SELECT {$headerFields} FROM {$table} WHERE isactive = '1' ORDER BY created_at DESC";
+        // Query untuk mendapatkan list sub-menu yang terhubung ke parent sublink
+        return "SELECT gmenu, dmenu, icon, tabel, name AS Detail FROM sys_dmenu WHERE sub = '{$parentLink}'";
     }
 
     /**

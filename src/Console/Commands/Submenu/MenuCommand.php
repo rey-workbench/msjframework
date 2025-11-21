@@ -282,9 +282,27 @@ class MenuCommand extends Command
 
         $this->menuData['auth_roles'] = [];
 
+        // Check if table has 'rules' column
+        $hasRulesColumn = false;
+        if (isset($this->menuData['table']) && $this->menuData['table'] !== '-') {
+            try {
+                $columns = DB::getSchemaBuilder()->getColumnListing($this->menuData['table']);
+                $hasRulesColumn = in_array('rules', $columns);
+            } catch (\Exception $e) {
+                // Table might not exist yet, default to false
+                $hasRulesColumn = false;
+            }
+        }
+
         foreach ($selectedRoles as $roleId) {
             $this->newLine();
             info("Mengatur hak akses untuk: {$roles[$roleId]}");
+
+            // Determine rules permission
+            $rulesPermission = '0';
+            if ($hasRulesColumn) {
+                $rulesPermission = confirm('Izinkan RULES? (filter data berdasarkan role)', false) ? '1' : '0';
+            }
 
             $this->menuData['auth_roles'][$roleId] = [
                 'value' => '1',
@@ -295,7 +313,7 @@ class MenuCommand extends Command
                 'print' => confirm('Izinkan CETAK?', true) ? '1' : '0',
                 'excel' => confirm('Izinkan EXCEL?', true) ? '1' : '0',
                 'pdf' => confirm('Izinkan PDF?', true) ? '1' : '0',
-                'rules' => confirm('Izinkan RULES?', true) ? '1' : '0',
+                'rules' => $rulesPermission,
             ];
         }
 
@@ -332,6 +350,9 @@ class MenuCommand extends Command
             
             $parent = DB::table('sys_dmenu')->where('dmenu', $parentDmenu)->first();
             $this->menuData['parent_link'] = $parent->sub;
+            $this->menuData['parent_dmenu'] = $parentDmenu;
+            // Set flag to add authorization for existing parent
+            $this->menuData['add_parent_auth'] = true;
         } else {
             info('Membuat parent sublink baru...');
             
