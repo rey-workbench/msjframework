@@ -70,7 +70,10 @@ trait HandlesTableConfiguration
     }
 
     /**
-     * Report Layout - Query definition + filter fields
+     * Report Layout - Query-based reporting
+     * Pattern dari seeder example_tabel_rpt_syslog.php:
+     *   - Field 1: query field dengan type = dmenu name
+     *   - Field 2+: filter fields (minimal config)
      */
     protected function insertReportTableConfig(): void
     {
@@ -78,33 +81,14 @@ trait HandlesTableConfiguration
             return;
         }
 
-        // First row: query definition
+        // First row: query definition (sesuai seeder - minimal fields only)
         DB::table('sys_table')->insert([
             'gmenu' => $this->menuData['gmenu'],
             'dmenu' => $this->menuData['dmenu'],
             'urut' => 1,
             'field' => 'query',
-            'alias' => 'Report Query',
-            'type' => 'report',
-            'length' => 0,
-            'decimals' => '0',
-            'default' => '',
-            'validate' => '',
-            'primary' => '0',
-            'generateid' => '',
-            'filter' => '0',
-            'list' => '1',
-            'show' => '1',
+            'type' => $this->menuData['dmenu'], // Type = dmenu name (e.g., 'rpexam')
             'query' => $this->generateReportQuery(),
-            'class' => '',
-            'sub' => '',
-            'link' => '',
-            'note' => '',
-            'position' => '0',
-            'isactive' => '1',
-            'user_create' => 'system',
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         // Subsequent rows: filter fields
@@ -197,6 +181,10 @@ trait HandlesTableConfiguration
 
     /**
      * Sublink Layout - Parent-child relationship form
+     * Pattern (dari seeder example_tabel_form_sublink):
+     *   - Primary keys → position='1', link ke parent
+     *   - Other fields → position='2'
+     *   - Semua fields → filter='1', list='1', show='1'
      */
     protected function insertSublinkTableConfig(): void
     {
@@ -209,15 +197,28 @@ trait HandlesTableConfiguration
             $this->insertSublinkParentTableConfig();
         }
 
-        // Insert konfigurasi untuk menu DATA (menggunakan konfigurasi standar)
-        // Menu data ini akan muncul di list kiri sublink
+        // Find all primary keys
+        $primaryKeys = collect($this->tableFields)->where('primary', '1')->pluck('field');
+        $firstPrimaryKey = $primaryKeys->first();
+
+        // Insert konfigurasi untuk menu DATA (child form)
         foreach ($this->tableFields as $field) {
-            $this->insertFormField($field, [
+            // Primary keys di position 1, others di position 2
+            $isPrimary = $primaryKeys->contains($field['field']);
+            
+            $overrides = [
                 'filter' => '1',
                 'list' => '1',
                 'show' => '1',
-                'link' => $field['link'] ?? '',
-            ]);
+                'position' => $isPrimary ? '1' : '2',
+            ];
+
+            // Primary key pertama gets link to parent
+            if ($field['field'] === $firstPrimaryKey) {
+                $overrides['link'] = $field['link'] ?? $this->menuData['parent_link'] ?? '';
+            }
+
+            $this->insertFormField($field, $overrides);
         }
     }
 
@@ -268,12 +269,32 @@ trait HandlesTableConfiguration
 
     /**
      * Manual Layout - User fully controls structure
+     * View location: resources/views/pages/{dmenu}/
+     * 
+     * Requirements:
+     *   - gmenu must have name = '-' (e.g., 'blankx')
+     *   - Creates view files in resources/views/pages/{dmenu}/
+     *   - No sys_table entries created
      */
     protected function insertManualTableConfig(): void
     {
-        // Manual layout typically doesn't insert sys_table
-        // Controller and views are generated from stubs
-        return;
+        // Manual layout tidak insert sys_table
+        // Hanya buat view files di resources/views/pages/{dmenu}/
+        
+        // Check jika gmenu name = '-' (untuk routing ke pages.{dmenu})
+        $gmenu = DB::table('sys_gmenu')
+            ->where('gmenu', $this->menuData['gmenu'])
+            ->first();
+            
+        if ($gmenu && $gmenu->name === '-') {
+            // Delegate ke FileGeneratorService
+            $this->generator->generateManualViews($this->menuData['dmenu']);
+            info("✓ View files created at resources/views/pages/{$this->menuData['dmenu']}/");
+            info("  - list.blade.php, add.blade.php, edit.blade.php, show.blade.php");
+        } else {
+            warning("⚠ Manual layout requires gmenu with name = '-' (e.g., 'blankx')");
+            info("  View path will be: {$this->menuData['gmenu']}.{$this->menuData['url']}");
+        }
     }
 
     /**
@@ -308,38 +329,37 @@ trait HandlesTableConfiguration
 
     /**
      * Insert a filter field (for reports)
+     * Pattern dari seeder example_tabel_rpt_syslog.php:
+     *   - Minimal essential fields only
+     *   - Fields: gmenu, dmenu, urut, field, alias, type, length (optional), validate, filter, query, class (optional)
      */
     protected function insertFilterField(array $field, int $urut): void
     {
-        $decimals = $this->determineDecimalPlaces($field['db_type'] ?? null);
-
-        DB::table('sys_table')->insert([
+        $data = [
             'gmenu' => $this->menuData['gmenu'],
             'dmenu' => $this->menuData['dmenu'],
             'urut' => $urut,
             'field' => $field['field'],
             'alias' => $field['label'],
             'type' => $field['type'],
-            'length' => $field['length'] ?? 0,
-            'decimals' => $decimals,
-            'default' => $field['default'] ?? '',
-            'validate' => $field['required'] === '1' ? 'required' : 'nullable',
-            'primary' => '0',
-            'generateid' => '',
+            'validate' => $this->buildValidationRules($field),
             'filter' => '1',
-            'list' => '0',
-            'show' => '0',
-            'query' => $field['query'] ?? '',
-            'class' => $field['class'] ?? '',
-            'sub' => '',
-            'link' => '',
-            'note' => $field['note'] ?? '',
-            'position' => '0',
-            'isactive' => '1',
-            'user_create' => 'system',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        ];
+
+        // Add optional fields if present
+        if (!empty($field['length'])) {
+            $data['length'] = $field['length'];
+        }
+        
+        if (!empty($field['query'])) {
+            $data['query'] = $field['query'];
+        }
+        
+        if (!empty($field['class'])) {
+            $data['class'] = $field['class'];
+        }
+
+        DB::table('sys_table')->insert($data);
     }
 
     /**

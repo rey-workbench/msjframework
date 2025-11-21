@@ -73,7 +73,7 @@ trait HandlesMenuCreation
                 'url' => strtolower($this->menuData['parent_dmenu']),
                 'tabel' => '-',
                 'layout' => 'sublnk',
-                'sub' => $this->menuData['parent_link'],
+                'sub' => null,  // Parent tidak punya sub (bukan self-reference)
                 'show' => '0',
                 'urut' => $this->menuData['dmenu_urut'] - 1,
                 'isactive' => '1',

@@ -346,4 +346,43 @@ PHP;
         
         return $casts;
     }
+
+    /**
+     * Generate manual view files di resources/views/pages/{dmenu}/
+     * Load templates dari src/Framework/Views/Manual/
+     */
+    public function generateManualViews(string $dmenu): void
+    {
+        // Determine base path (Laravel project path)
+        $basePath = base_path();
+        
+        // Path ke folder views/pages
+        $viewPath = $basePath . '/resources/views/pages/' . $dmenu;
+        
+        // Buat folder jika belum ada
+        if (!is_dir($viewPath)) {
+            mkdir($viewPath, 0755, true);
+        }
+        
+        // Path ke template stubs di framework
+        $stubPath = __DIR__ . '/../Framework/Views/Manual';
+        
+        // Copy template files
+        $templates = ['list', 'add', 'edit', 'show'];
+        
+        foreach ($templates as $template) {
+            $stubFile = $stubPath . '/' . $template . '.blade.stub';
+            $targetFile = $viewPath . '/' . $template . '.blade.php';
+            
+            if (file_exists($stubFile)) {
+                $content = file_get_contents($stubFile);
+                
+                // Replace placeholders dengan empty untuk manual editing
+                $content = str_replace('{{tableHeaders}}', '', $content);
+                $content = str_replace('{{tableRows}}', '', $content);
+                
+                file_put_contents($targetFile, $content);
+            }
+        }
+    }
 }
