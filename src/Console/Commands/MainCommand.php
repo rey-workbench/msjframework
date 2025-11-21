@@ -3,7 +3,7 @@
 namespace MSJFramework\Console\Commands;
 
 use Illuminate\Console\Command;
-use MSJFramework\Console\Commands\Traits\HandleView;
+use MSJFramework\Console\Commands\Traits\HandleASCII;
 use MSJFramework\Services\PlatformDetectorService;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\search;
@@ -12,7 +12,7 @@ use function Laravel\Prompts\note;
 
 class MainCommand extends Command
 {
-    use HandleView;
+    use HandleASCII;
     protected $signature = 'msj';
     protected $description = 'MSJ Framework - Command Hub';
     
@@ -55,6 +55,7 @@ class MainCommand extends Command
         $options = [
             'install' => '📦 Install - Instalasi komponen MSJ Framework',
             'menu' => '🎯 Make Menu - Buat menu baru dengan wizard',
+            'enum' => '📋 Make Enum - Buat dropdown options untuk form',
             'exit' => '❌ Exit - Keluar',
         ];
 
@@ -87,6 +88,7 @@ class MainCommand extends Command
         return match($choice) {
             'install' => $this->call('msj:install'),
             'menu' => $this->call('msj:make:menu'),
+            'enum' => $this->call('msj:make:enum'),
             'exit' => $this->exitGracefully(),
             default => Command::FAILURE,
         };

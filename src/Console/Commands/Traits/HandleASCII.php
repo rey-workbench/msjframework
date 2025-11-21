@@ -2,7 +2,7 @@
 
 namespace MSJFramework\Console\Commands\Traits;
 
-trait HandleView
+trait HandleASCII
 {
     /**
      * Get ASCII art header for MSJ Framework

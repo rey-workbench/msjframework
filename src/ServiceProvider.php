@@ -5,6 +5,14 @@ namespace MSJFramework;
 use MSJFramework\Console\Commands\MainCommand;
 use MSJFramework\Console\Commands\Submenu\InstallCommand;
 use MSJFramework\Console\Commands\Submenu\MenuCommand;
+use MSJFramework\Console\Commands\Submenu\EnumCommand;
+use MSJFramework\Console\Commands\Submenu\MenuLayouts\MasterLayoutCommand;
+use MSJFramework\Console\Commands\Submenu\MenuLayouts\TranscLayoutCommand;
+use MSJFramework\Console\Commands\Submenu\MenuLayouts\SystemLayoutCommand;
+use MSJFramework\Console\Commands\Submenu\MenuLayouts\StandrLayoutCommand;
+use MSJFramework\Console\Commands\Submenu\MenuLayouts\SublnkLayoutCommand;
+use MSJFramework\Console\Commands\Submenu\MenuLayouts\ReportLayoutCommand;
+use MSJFramework\Console\Commands\Submenu\MenuLayouts\ManualLayoutCommand;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 
 class ServiceProvider extends BaseServiceProvider
@@ -16,6 +24,14 @@ class ServiceProvider extends BaseServiceProvider
                 MainCommand::class,
                 InstallCommand::class,
                 MenuCommand::class,
+                EnumCommand::class,
+                MasterLayoutCommand::class,
+                TranscLayoutCommand::class,
+                SystemLayoutCommand::class,
+                StandrLayoutCommand::class,
+                SublnkLayoutCommand::class,
+                ReportLayoutCommand::class,
+                ManualLayoutCommand::class,
             ]);
 
             // Publish migrations
