@@ -11,6 +11,10 @@
 Thumbs.db
 update-namespace.php
 
+# Build output - DON'T commit obfuscated dist to main repo
+/dist/
+/build/
+
 setup-git.sh
 reset-tags.sh
 PACKAGIST_UPDATE.md

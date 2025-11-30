@@ -68,7 +68,10 @@
     "scripts": {
         "test": "phpunit",
         "pint": "pint",
-        "pint:test": "pint --test"
+        "pint:test": "pint --test",
+        "build": "php build/build.php --clean --verbose",
+        "build:dev": "php build/build.php --clean --no-obfuscate --verbose",
+        "build:prod": "php build/build.php --clean --verbose"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
