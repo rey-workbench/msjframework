@@ -348,16 +348,28 @@ PHP;
     }
 
     /**
-     * Generate manual view files di resources/views/pages/{dmenu}/
-     * Load templates dari src/Framework/Views/Manual/
+     * Generate manual view files
+     * 
+     * Path logic (sesuai PageController):
+     * - Jika gmenu name = '-' → resources/views/pages/{url}/
+     * - Jika gmenu name != '-' → resources/views/{gmenu}/{url}/
+     * 
+     * @param string $gmenu Group menu code
+     * @param string $url URL/folder name for views
+     * @param string $gmenuName Name of gmenu (use '-' for pages folder)
      */
-    public function generateManualViews(string $dmenu): void
+    public function generateManualViews(string $gmenu, string $url, string $gmenuName = '-'): void
     {
-        // Determine base path (Laravel project path)
         $basePath = base_path();
         
-        // Path ke folder views/pages
-        $viewPath = $basePath . '/resources/views/pages/' . $dmenu;
+        // Determine view path based on gmenu name
+        if ($gmenuName === '-') {
+            // gmenu name = '-' → views di pages/{url}/
+            $viewPath = $basePath . '/resources/views/pages/' . $url;
+        } else {
+            // gmenu name != '-' → views di {gmenu}/{url}/
+            $viewPath = $basePath . '/resources/views/' . $gmenu . '/' . $url;
+        }
         
         // Buat folder jika belum ada
         if (!is_dir($viewPath)) {
@@ -380,6 +392,8 @@ PHP;
                 // Replace placeholders dengan empty untuk manual editing
                 $content = str_replace('{{tableHeaders}}', '', $content);
                 $content = str_replace('{{tableRows}}', '', $content);
+                $content = str_replace('{{formFields}}', '', $content);
+                $content = str_replace('{{detailFields}}', '', $content);
                 
                 file_put_contents($targetFile, $content);
             }

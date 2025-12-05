@@ -1,0 +1,70 @@
+# MSJ Framework - Diviky Secure Configuration
+# Laravel-Aware PHP Obfuscator
+
+project:
+  type: package
+  name: msjframework
+  version: 1.0.0
+
+obfuscation:
+  variables: true
+  functions: false
+  classes: false
+  methods: false
+  properties: true
+  constants: false
+  namespaces: false
+  strings: false
+  control_structures: false
+  shuffle_statements: false
+
+scope:
+  include_paths:
+    - src/
+  exclude_paths:
+    - vendor/
+    - tests/
+    - build/
+    - dist/
+    - config/
+  include_extensions:
+    - php
+  preserve_namespaces:
+    - Illuminate
+    - Laravel
+    - Symfony
+    - Psr
+    - Carbon
+    - MSJFramework
+  preserve_classes:
+    - ServiceProvider
+    - Controller
+    - Model
+    - Middleware
+    - Command
+    - Request
+    - BaseServiceProvider
+  preserve_methods:
+    - boot
+    - register
+    - handle
+    - rules
+    - authorize
+    - __construct
+    - __call
+    - __get
+    - __set
+    - __invoke
+
+output:
+  directory: dist/
+  preserve_structure: true
+  add_header: false
+  strip_comments: true
+  strip_whitespace: true
+
+security:
+  scramble_mode: identifier
+  scramble_length: 6
+  add_dummy_code: false
+  randomize_order: false
