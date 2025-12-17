@@ -21,47 +21,64 @@ class FileGeneratorService
     {
         $modelName = $this->getModelName($tableName);
         $columns = $this->db->getTableColumns($tableName)->all();
-        
+
+        // Check if table has deleted_at column for SoftDeletes
+        $hasDeletedAt = false;
+        foreach ($columns as $column) {
+            if ($column->Field === 'deleted_at') {
+                $hasDeletedAt = true;
+                break;
+            }
+        }
+
         $fillable = $this->extractFillableFields($columns);
         $casts = $this->extractCasts($columns);
         $relationships = $this->db->detectRelationships($tableName);
-        
+
         // Load stub
         $stub = file_get_contents(__DIR__.'/../Framework/Models/models.stub');
-        
+
         // Build replacements
         $fillableStr = "'" . implode("',\n        '", $fillable) . "'";
-        
+
         $castsStr = '';
         foreach ($casts as $field => $type) {
             $castsStr .= "        '{$field}' => '{$type}',\n";
         }
         $castsStr = rtrim($castsStr, ",\n");
-        
+
         $relationshipsStr = '';
         foreach ($relationships as $rel) {
             $relationshipsStr .= $this->buildRelationshipMethod($rel);
         }
-        
+
+        // SoftDeletes conditional
+        $softDeletesUse = $hasDeletedAt ? "use Illuminate\\Database\\Eloquent\\SoftDeletes;\n" : '';
+        $softDeletesTrait = $hasDeletedAt ? "    use SoftDeletes;\n\n" : '';
+
         // Replace placeholders
         $content = str_replace([
             '{{modelName}}',
             '{{tableName}}',
             '{{fillable}}',
             '{{casts}}',
-            '{{relationships}}'
+            '{{relationships}}',
+            '{{softDeletesUse}}',
+            '{{softDeletesTrait}}'
         ], [
             $modelName,
             $tableName,
             $fillableStr,
             $castsStr,
-            $relationshipsStr
+            $relationshipsStr,
+            $softDeletesUse,
+            $softDeletesTrait
         ], $stub);
-        
+
         $path = $this->getModelPath($modelName);
         $this->ensureDirectoryExists(dirname($path));
         file_put_contents($path, $content);
-        
+
         return ['name' => $modelName, 'path' => $path];
     }
 
