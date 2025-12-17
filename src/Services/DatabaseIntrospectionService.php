@@ -37,7 +37,7 @@ class DatabaseIntrospectionService
             $urut = 1;
             
             foreach ($columns as $column) {
-                if ($this->isSystemField($column->Field)) {
+                if ($this->isSystemField($column->Field) && $column->Key !== 'PRI') {
                     continue;
                 }
                 

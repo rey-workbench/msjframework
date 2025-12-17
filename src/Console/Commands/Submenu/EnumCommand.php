@@ -4,6 +4,7 @@ namespace MSJFramework\Console\Commands\Submenu;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use MSJFramework\Services\SeederGeneratorService;
 use function Laravel\Prompts\text;
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\info;
@@ -54,7 +55,7 @@ class EnumCommand extends Command
 
             do {
                 note("Opsi #{$urut}");
-                
+
                 $name = text(
                     label: 'Name (disimpan di database)',
                     placeholder: '1',
@@ -124,6 +125,10 @@ class EnumCommand extends Command
 
                 info("✓ ID Enum: {$idenum}");
                 info("✓ Jumlah Opsi: " . count($options));
+                
+                // Generate seeder backup
+                $this->generateEnumSeederBackup($idenum);
+                
                 $this->newLine();
 
                 note('Cara penggunaan:');
@@ -149,6 +154,19 @@ class EnumCommand extends Command
             }
             $this->newLine();
             return Command::FAILURE;
+        }
+    }
+
+    protected function generateEnumSeederBackup(string $idenum): void
+    {
+        try {
+            $seederService = new SeederGeneratorService();
+            $path = $seederService->generateEnumSeeder($idenum);
+            
+            $relativePath = str_replace(base_path() . '/', '', $path);
+            info("📦 Seeder backup: {$relativePath}");
+        } catch (\Exception $e) {
+            warning("⚠ Gagal membuat seeder backup: " . $e->getMessage());
         }
     }
 

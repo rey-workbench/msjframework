@@ -3,6 +3,7 @@
 namespace MSJFramework\Console\Commands\Traits;
 
 use Illuminate\Support\Facades\DB;
+use MSJFramework\Services\SeederGeneratorService;
 
 trait HandlesMenuCreation
 {
@@ -22,9 +23,31 @@ trait HandlesMenuCreation
             $this->createIdGenerationRulesIfNeeded();
 
             DB::commit();
+            
+            // Generate backup seeder
+            $this->generateMenuSeederBackup();
+            
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
+        }
+    }
+
+    /**
+     * Generate seeder file as backup
+     */
+    protected function generateMenuSeederBackup(): void
+    {
+        try {
+            $seederService = new SeederGeneratorService();
+            $path = $seederService->generateMenuSeeder($this->menuData);
+            
+            // Get relative path for display
+            $relativePath = str_replace(base_path() . '/', '', $path);
+            \Laravel\Prompts\info("📦 Seeder backup: {$relativePath}");
+        } catch (\Exception $e) {
+            // Silent fail - seeder generation is not critical
+            \Laravel\Prompts\warning("⚠ Gagal membuat seeder backup: " . $e->getMessage());
         }
     }
 
@@ -51,7 +74,6 @@ trait HandlesMenuCreation
 
     /**
      * Create parent sublink container if needed
-     * Note: sys_table for parent query is handled by HandlesTableConfiguration trait
      */
     protected function createSublinkParentIfNeeded(): void
     {
@@ -59,12 +81,10 @@ trait HandlesMenuCreation
             return;
         }
 
-        // Check if parent menu already exists
         $exists = DB::table('sys_dmenu')
             ->where('dmenu', $this->menuData['parent_dmenu'])
             ->exists();
-        
-        // Only insert if not exists
+
         if (!$exists) {
             DB::table('sys_dmenu')->insert([
                 'dmenu' => $this->menuData['parent_dmenu'],
@@ -73,7 +93,7 @@ trait HandlesMenuCreation
                 'url' => strtolower($this->menuData['parent_dmenu']),
                 'tabel' => '-',
                 'layout' => 'sublnk',
-                'sub' => null,  // Parent tidak punya sub (bukan self-reference)
+                'sub' => null,
                 'show' => '0',
                 'urut' => $this->menuData['dmenu_urut'] - 1,
                 'isactive' => '1',
@@ -89,11 +109,8 @@ trait HandlesMenuCreation
      */
     protected function createDetailMenu(): void
     {
-        // Untuk layout sublnk, menu yang dibuat adalah menu DATA yang akan muncul di list sublink
-        // Layout aktual untuk menu data ini adalah 'standr' atau 'master', bukan 'sublnk'
         $actualLayout = $this->menuData['layout'];
         if ($actualLayout === 'sublnk') {
-            // Default ke standr untuk menu data di sublink
             $actualLayout = 'standr';
         }
 
@@ -127,7 +144,6 @@ trait HandlesMenuCreation
             return;
         }
 
-        // Authorization untuk menu data
         foreach ($this->menuData['auth_roles'] as $roleId => $permissions) {
             DB::table('sys_auth')->insert([
                 'gmenu' => $this->menuData['gmenu'],
@@ -149,19 +165,16 @@ trait HandlesMenuCreation
             ]);
         }
 
-        // Authorization untuk parent sublink (jika create_parent = true atau add_parent_auth = true)
-        if ((isset($this->menuData['create_parent']) && $this->menuData['create_parent']) || 
+        if ((isset($this->menuData['create_parent']) && $this->menuData['create_parent']) ||
             (isset($this->menuData['add_parent_auth']) && $this->menuData['add_parent_auth'])) {
-            
+
             foreach ($this->menuData['auth_roles'] as $roleId => $permissions) {
-                // Check if authorization already exists for this role
                 $existingAuth = DB::table('sys_auth')
                     ->where('gmenu', $this->menuData['gmenu'])
                     ->where('dmenu', $this->menuData['parent_dmenu'])
                     ->where('idroles', $roleId)
                     ->first();
-                
-                // Only insert if not exists
+
                 if (!$existingAuth) {
                     DB::table('sys_auth')->insert([
                         'gmenu' => $this->menuData['gmenu'],

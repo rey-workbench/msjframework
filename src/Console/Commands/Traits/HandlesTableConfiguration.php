@@ -33,6 +33,34 @@ trait HandlesTableConfiguration
         if (method_exists($this, $handler)) {
             $this->$handler();
         }
+
+        // Generate views in pages folder if gmenu name is '-' (e.g., 'blankx')
+        $this->generateViewsForBlankGmenu();
+    }
+
+    /**
+     * Generate views in resources/views/pages/{url}/ if gmenu name is '-'
+     * This applies to all layouts when using gmenu like 'blankx'
+     */
+    protected function generateViewsForBlankGmenu(): void
+    {
+        // Skip if manual layout (already handled in insertManualTableConfig)
+        if ($this->menuData['layout'] === 'manual') {
+            return;
+        }
+
+        $gmenu = DB::table('sys_gmenu')
+            ->where('gmenu', $this->menuData['gmenu'])
+            ->first();
+
+        if ($gmenu && $gmenu->name === '-') {
+            $gmenuCode = $this->menuData['gmenu'];
+            $url = $this->menuData['url'];
+            
+            $this->generator->generateManualViews($gmenuCode, $url, '-');
+            info("✓ View files created at resources/views/pages/{$url}/");
+            info("  - list.blade.php, add.blade.php, edit.blade.php, show.blade.php");
+        }
     }
 
     /**
@@ -269,32 +297,36 @@ trait HandlesTableConfiguration
 
     /**
      * Manual Layout - User fully controls structure
-     * View location: resources/views/pages/{dmenu}/
      * 
-     * Requirements:
-     *   - gmenu must have name = '-' (e.g., 'blankx')
-     *   - Creates view files in resources/views/pages/{dmenu}/
-     *   - No sys_table entries created
+     * View location (sesuai PageController):
+     * - Jika gmenu name = '-' → resources/views/pages/{url}/
+     * - Jika gmenu name != '-' → resources/views/{gmenu}/{url}/
+     * 
+     * No sys_table entries created for manual layout
      */
     protected function insertManualTableConfig(): void
     {
         // Manual layout tidak insert sys_table
-        // Hanya buat view files di resources/views/pages/{dmenu}/
+        // Buat view files sesuai gmenu name
         
-        // Check jika gmenu name = '-' (untuk routing ke pages.{dmenu})
         $gmenu = DB::table('sys_gmenu')
             ->where('gmenu', $this->menuData['gmenu'])
             ->first();
-            
-        if ($gmenu && $gmenu->name === '-') {
-            // Delegate ke FileGeneratorService
-            $this->generator->generateManualViews($this->menuData['dmenu']);
-            info("✓ View files created at resources/views/pages/{$this->menuData['dmenu']}/");
-            info("  - list.blade.php, add.blade.php, edit.blade.php, show.blade.php");
+        
+        $gmenuName = $gmenu->name ?? '';
+        $gmenuCode = $this->menuData['gmenu'];
+        $url = $this->menuData['url'];
+        
+        // Generate views dengan path yang sesuai
+        $this->generator->generateManualViews($gmenuCode, $url, $gmenuName);
+        
+        // Tampilkan info lokasi views
+        if ($gmenuName === '-') {
+            info("✓ View files created at resources/views/pages/{$url}/");
         } else {
-            warning("⚠ Manual layout requires gmenu with name = '-' (e.g., 'blankx')");
-            info("  View path will be: {$this->menuData['gmenu']}.{$this->menuData['url']}");
+            info("✓ View files created at resources/views/{$gmenuCode}/{$url}/");
         }
+        info("  - list.blade.php, add.blade.php, edit.blade.php, show.blade.php");
     }
 
     /**

@@ -21,47 +21,64 @@ class FileGeneratorService
     {
         $modelName = $this->getModelName($tableName);
         $columns = $this->db->getTableColumns($tableName)->all();
-        
+
+        // Check if table has deleted_at column for SoftDeletes
+        $hasDeletedAt = false;
+        foreach ($columns as $column) {
+            if ($column->Field === 'deleted_at') {
+                $hasDeletedAt = true;
+                break;
+            }
+        }
+
         $fillable = $this->extractFillableFields($columns);
         $casts = $this->extractCasts($columns);
         $relationships = $this->db->detectRelationships($tableName);
-        
+
         // Load stub
         $stub = file_get_contents(__DIR__.'/../Framework/Models/models.stub');
-        
+
         // Build replacements
         $fillableStr = "'" . implode("',\n        '", $fillable) . "'";
-        
+
         $castsStr = '';
         foreach ($casts as $field => $type) {
             $castsStr .= "        '{$field}' => '{$type}',\n";
         }
         $castsStr = rtrim($castsStr, ",\n");
-        
+
         $relationshipsStr = '';
         foreach ($relationships as $rel) {
             $relationshipsStr .= $this->buildRelationshipMethod($rel);
         }
-        
+
+        // SoftDeletes conditional
+        $softDeletesUse = $hasDeletedAt ? "use Illuminate\\Database\\Eloquent\\SoftDeletes;\n" : '';
+        $softDeletesTrait = $hasDeletedAt ? "    use SoftDeletes;\n\n" : '';
+
         // Replace placeholders
         $content = str_replace([
             '{{modelName}}',
             '{{tableName}}',
             '{{fillable}}',
             '{{casts}}',
-            '{{relationships}}'
+            '{{relationships}}',
+            '{{softDeletesUse}}',
+            '{{softDeletesTrait}}'
         ], [
             $modelName,
             $tableName,
             $fillableStr,
             $castsStr,
-            $relationshipsStr
+            $relationshipsStr,
+            $softDeletesUse,
+            $softDeletesTrait
         ], $stub);
-        
+
         $path = $this->getModelPath($modelName);
         $this->ensureDirectoryExists(dirname($path));
         file_put_contents($path, $content);
-        
+
         return ['name' => $modelName, 'path' => $path];
     }
 
@@ -348,16 +365,28 @@ PHP;
     }
 
     /**
-     * Generate manual view files di resources/views/pages/{dmenu}/
-     * Load templates dari src/Framework/Views/Manual/
+     * Generate manual view files
+     * 
+     * Path logic (sesuai PageController):
+     * - Jika gmenu name = '-' → resources/views/pages/{url}/
+     * - Jika gmenu name != '-' → resources/views/{gmenu}/{url}/
+     * 
+     * @param string $gmenu Group menu code
+     * @param string $url URL/folder name for views
+     * @param string $gmenuName Name of gmenu (use '-' for pages folder)
      */
-    public function generateManualViews(string $dmenu): void
+    public function generateManualViews(string $gmenu, string $url, string $gmenuName = '-'): void
     {
-        // Determine base path (Laravel project path)
         $basePath = base_path();
         
-        // Path ke folder views/pages
-        $viewPath = $basePath . '/resources/views/pages/' . $dmenu;
+        // Determine view path based on gmenu name
+        if ($gmenuName === '-') {
+            // gmenu name = '-' → views di pages/{url}/
+            $viewPath = $basePath . '/resources/views/pages/' . $url;
+        } else {
+            // gmenu name != '-' → views di {gmenu}/{url}/
+            $viewPath = $basePath . '/resources/views/' . $gmenu . '/' . $url;
+        }
         
         // Buat folder jika belum ada
         if (!is_dir($viewPath)) {
@@ -380,6 +409,8 @@ PHP;
                 // Replace placeholders dengan empty untuk manual editing
                 $content = str_replace('{{tableHeaders}}', '', $content);
                 $content = str_replace('{{tableRows}}', '', $content);
+                $content = str_replace('{{formFields}}', '', $content);
+                $content = str_replace('{{detailFields}}', '', $content);
                 
                 file_put_contents($targetFile, $content);
             }

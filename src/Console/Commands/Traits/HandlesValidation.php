@@ -8,8 +8,8 @@ trait HandlesValidation
 {
     protected function validateGmenuId($value): ?string
     {
-        if (!preg_match('/^[a-z0-9]{6}$/', $value)) {
-            return 'ID Menu Grup harus 6 karakter, huruf kecil atau angka';
+        if (strlen($value) !== 6) {
+            return 'ID Menu Grup harus tepat 6 karakter';
         }
 
         if (DB::table('sys_gmenu')->where('gmenu', $value)->exists()) {
@@ -21,8 +21,8 @@ trait HandlesValidation
 
     protected function validateDmenuId($value): ?string
     {
-        if (!preg_match('/^[a-z0-9]{6}$/', $value)) {
-            return 'ID Menu Detail harus 6 karakter, huruf kecil atau angka';
+        if (strlen($value) !== 6) {
+            return 'ID Menu Detail harus tepat 6 karakter';
         }
 
         if (DB::table('sys_dmenu')->where('dmenu', $value)->exists()) {
@@ -34,8 +34,9 @@ trait HandlesValidation
 
     protected function validateUrl($value): ?string
     {
-        if (!preg_match('/^[a-z0-9\-]+$/', $value)) {
-            return 'URL harus huruf kecil dengan angka dan strip (-)';
+        // URL harus dimulai dengan huruf (untuk nama class yang valid)
+        if (!preg_match('/^[a-z][a-z0-9\-]*$/', $value)) {
+            return 'URL harus dimulai dengan huruf, boleh berisi angka dan strip (-)';
         }
 
         if (DB::table('sys_dmenu')->where('url', $value)->exists()) {
